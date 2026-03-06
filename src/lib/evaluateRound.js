@@ -194,10 +194,17 @@ export async function evaluateRound(roomId, hourIndex) {
     'All surviving players gain +1 Point',
   ].join('\n')
 
+  const playerPointChanges = {}
+  allPlayers.forEach((p) => {
+    const delta = scoreGains[p.session_id] ?? 0
+    playerPointChanges[p.session_id] = delta
+  })
+
   await supabase.from('round_results').insert({
     room_id: roomId,
     hour_index: hourIndex,
     result_text: resultText,
+    player_point_changes: playerPointChanges,
   })
 
   // Current ranking (before this round) = end of previous round

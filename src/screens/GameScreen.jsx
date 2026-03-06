@@ -287,7 +287,7 @@ export default function GameScreen() {
           .select('*')
           .eq('room_id', roomId)
           .eq('hour_index', lastRound.hour_index)
-        setRecapData({ rounds: [{ hourIndex: lastRound.hour_index, attacks: allRoundAttacks || [] }] })
+        setRecapData({ rounds: [{ hourIndex: lastRound.hour_index, attacks: allRoundAttacks || [], pointChanges: lastRound.player_point_changes }] })
       })()
     }
   }, [me?.id, roundResults, players, roomId, sessionId])
@@ -302,7 +302,7 @@ export default function GameScreen() {
       .select('*')
       .eq('room_id', roomId)
       .eq('hour_index', lastRound.hour_index)
-    setRecapData({ rounds: [{ hourIndex: lastRound.hour_index, attacks: allRoundAttacks || [] }] })
+    setRecapData({ rounds: [{ hourIndex: lastRound.hour_index, attacks: allRoundAttacks || [], pointChanges: lastRound.player_point_changes }] })
   }
 
   async function showFullGameRecap() {
@@ -310,21 +310,28 @@ export default function GameScreen() {
     setRecapModal('full_game')
     setRecapData(null)
     const currentHi = hourIndex ?? getCurrentHourIndex().hourIndex
-    const { data: allAttacks } = await supabase
-      .from('attack_allocations')
-      .select('*')
-      .eq('room_id', roomId)
+    const [{ data: allAttacks }, { data: roundResultsData }] = await Promise.all([
+      supabase.from('attack_allocations').select('*').eq('room_id', roomId),
+      supabase.from('round_results').select('hour_index, player_point_changes').eq('room_id', roomId),
+    ])
     const byRound = {}
     ;(allAttacks || []).forEach((a) => {
       if (!byRound[a.hour_index]) byRound[a.hour_index] = []
       byRound[a.hour_index].push(a)
     })
+    const pointChangesByRound = Object.fromEntries(
+      (roundResultsData || []).map((r) => [r.hour_index, r.player_point_changes])
+    )
     const previousRoundIndices = []
     for (let hi = 1; hi < currentHi; hi++) previousRoundIndices.push(hi)
     const rounds = previousRoundIndices
       .reverse()
       .slice(0, 10)
-      .map((hi) => ({ hourIndex: hi, attacks: byRound[hi] || [] }))
+      .map((hi) => ({
+        hourIndex: hi,
+        attacks: byRound[hi] || [],
+        pointChanges: pointChangesByRound[hi] || null,
+      }))
     setRecapData({ rounds })
   }
 
@@ -885,17 +892,14 @@ export default function GameScreen() {
                 roundResults.map((r) => (
                   <div key={r.id} className="round-block">
                     <div className="round-header">Round {r.hour_index}</div>
-                    {roundLogAttacks[r.hour_index]?.length > 0 ? (
-                      <RecapFlowVisual
-                        attacks={roundLogAttacks[r.hour_index]}
-                        players={players}
-                        sessionId={sessionId}
-                        roundIndex={r.hour_index}
-                        compact
-                      />
-                    ) : (
-                      <p className="round-detail round-detail-empty">No attacks this round.</p>
-                    )}
+                    <RecapFlowVisual
+                      attacks={roundLogAttacks[r.hour_index] || []}
+                      players={players}
+                      sessionId={sessionId}
+                      roundIndex={r.hour_index}
+                      compact
+                      pointChanges={r.player_point_changes}
+                    />
                   </div>
                 ))
               )}
@@ -1047,6 +1051,7 @@ export default function GameScreen() {
                       players={players}
                       sessionId={sessionId}
                       roundIndex={r.hourIndex}
+                      pointChanges={r.pointChanges}
                     />
                   ))}
                 </div>

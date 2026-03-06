@@ -1,7 +1,7 @@
 import PixelKnight from './PixelKnight'
 import './RecapFlowVisual.css'
 
-export default function RecapFlowVisual({ attacks, players, sessionId, roundIndex, compact }) {
+export default function RecapFlowVisual({ attacks, players, sessionId, roundIndex, compact, pointChanges }) {
   const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
   const getPlayer = (sid) => players.find((p) => p.session_id === sid)
 
@@ -63,6 +63,25 @@ export default function RecapFlowVisual({ attacks, players, sessionId, roundInde
           <p><strong>You were attacked by:</strong> {attacks?.filter((a) => a.target_session_id === sessionId).length === 0
             ? 'No one'
             : [...new Set(attacks?.filter((a) => a.target_session_id === sessionId).map((a) => getName(a.attacker_session_id)))].join(', ')}</p>
+        </div>
+      )}
+      {pointChanges && Object.keys(pointChanges).length > 0 && (
+        <div className="recap-flow-points">
+          <strong>Points:</strong>{' '}
+          {Object.entries(pointChanges)
+            .sort((a, b) => (b[1] - a[1]))
+            .flatMap(([sid, delta], i) => {
+              const name = getName(sid)
+              const isMe = sid === sessionId
+              const label = delta > 0 ? `+${delta}` : String(delta)
+              const pts = Math.abs(delta) === 1 ? 'pt' : 'pts'
+              const span = (
+                <span key={sid} className={isMe ? 'you-label' : ''}>
+                  {name}{isMe ? ' (you)' : ''}: {label} {pts}
+                </span>
+              )
+              return i === 0 ? [span] : [', ', span]
+            })}
         </div>
       )}
     </div>
