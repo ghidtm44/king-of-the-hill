@@ -888,9 +888,36 @@
   overflow-y: auto;
 }
 
+.round-log.expanded {
+  max-height: none;
+}
+
+.round-log-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.round-log-expand-btn:hover {
+  color: var(--accent-gold);
+}
+
+.round-log-arrow {
+  font-size: 0.5rem;
+  color: var(--accent-gold);
+}
+
 .round-log h3 {
   font-size: 0.55rem;
-  margin-bottom: 0.5rem;
+  margin: 0;
 }
 
 .round-block {
@@ -1488,7 +1515,7 @@
     min-height: 44px;
   }
 
-  .round-log {
+  .round-log:not(.expanded) {
     max-height: 150px;
   }
 

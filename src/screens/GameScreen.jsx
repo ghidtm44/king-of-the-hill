@@ -22,6 +22,7 @@ export default function GameScreen() {
   const [items, setItems] = useState([])
   const [roundResults, setRoundResults] = useState([])
   const [roundLogAttacks, setRoundLogAttacks] = useState({})
+  const [roundLogExpanded, setRoundLogExpanded] = useState(false)
   const [selectedTargetId, setSelectedTargetId] = useState(null)
   const [timeLeft, setTimeLeft] = useState({ minutes: 59, seconds: 59 })
   const [hourIndex, setHourIndex] = useState(0)
@@ -872,8 +873,17 @@ export default function GameScreen() {
           )}
         </main>
 
-        <div className="round-log">
-          <h3>ROUND RECAP — Attack flow</h3>
+        <div className={`round-log ${roundLogExpanded ? 'expanded' : ''}`}>
+          <button
+            type="button"
+            className="round-log-expand-btn"
+            onClick={() => setRoundLogExpanded((e) => !e)}
+            aria-expanded={roundLogExpanded}
+            aria-label={roundLogExpanded ? 'Collapse recap' : 'Expand recap'}
+          >
+            <h3>ROUND RECAP — Attack flow</h3>
+            <span className="round-log-arrow">{roundLogExpanded ? '▲' : '▼'}</span>
+          </button>
           <div className="log-content">
             {roundResults.length === 0 ? (
               <p>No rounds yet. Results appear here every round.</p>

@@ -48,6 +48,7 @@ export default function RecapFlowVisual({ attacks, players, sessionId, roundInde
                             style={{ width: `${(a.attack_points_used / maxAttack) * 80}%` }}
                             title={`${a.attack_points_used} attack`}
                           />
+                          <span className="recap-flow-bar-value">{a.attack_points_used}</span>
                         </div>
                       </div>
                     )
