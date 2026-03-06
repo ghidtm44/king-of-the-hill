@@ -31,6 +31,24 @@
   color: var(--accent-gold);
 }
 
+.recap-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.4rem;
+  background: var(--bg-light);
+  border: 2px solid var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.recap-btn:hover:not(:disabled) {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+}
+
+.recap-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .my-stats {
   display: flex;
   align-items: center;
@@ -75,6 +93,15 @@
 
 .player-row.me {
   border-color: var(--accent-gold);
+}
+
+.player-row.selected {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+.player-row[role="button"] {
+  cursor: pointer;
 }
 
 .player-info {
@@ -176,14 +203,19 @@
 .pending-list {
   list-style: none;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
 }
 
 .pending-list li {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0;
+  padding: 0.35rem 0.5rem;
   font-size: 0.45rem;
+  background: var(--bg-light);
+  border: 2px solid var(--border-pixel);
 }
 
 .attack-section h3,
@@ -463,6 +495,146 @@
   font-size: 0.6rem;
 }
 
+/* Recap modal */
+.recap-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+  padding: 1rem;
+}
+
+.recap-panel {
+  background: var(--bg-medium);
+  border: 4px solid var(--accent-gold);
+  max-width: 450px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.recap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 2px solid var(--border-pixel);
+}
+
+.recap-header h3 {
+  font-size: 0.55rem;
+  margin: 0;
+}
+
+.recap-body {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.recap-text {
+  font-size: 0.45rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+.recap-error {
+  color: var(--accent-red);
+  font-size: 0.45rem;
+}
+
+/* Player history modal */
+.player-history-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.player-history-panel {
+  background: var(--bg-medium);
+  border: 4px solid var(--border-pixel);
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 2px solid var(--border-pixel);
+}
+
+.player-history-header h3 {
+  flex: 1;
+  font-size: 0.55rem;
+  margin: 0;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+  line-height: 1;
+  background: var(--bg-dark);
+  border: 2px solid var(--border-pixel);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.player-history-content {
+  padding: 1rem;
+  overflow-y: auto;
+  font-size: 0.4rem;
+}
+
+.history-round {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border-pixel);
+}
+
+.history-round:last-child {
+  border-bottom: none;
+}
+
+.history-round-header {
+  font-size: 0.5rem;
+  color: var(--accent-gold);
+  margin-bottom: 0.35rem;
+}
+
+.history-detail {
+  font-size: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+
+.history-detail.received {
+  color: var(--accent-red);
+}
+
+@media (max-width: 768px) {
+  .player-history-panel {
+    max-height: 70vh;
+  }
+}
+
 /* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 768px) {
   .game-screen {
@@ -482,13 +654,18 @@
 
   .game-header .timer {
     order: 2;
-    width: 100%;
-    text-align: center;
     font-size: 0.55rem;
   }
 
-  .game-header .my-stats {
+  .game-header .recap-btn {
     order: 3;
+    font-size: 0.35rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .game-header .my-stats {
+    order: 4;
+    width: 100%;
     flex-wrap: wrap;
     justify-content: center;
     font-size: 0.45rem;

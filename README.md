@@ -25,7 +25,12 @@ Create `.env` for production:
 ```
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_OPENAI_API_KEY=sk-your-openai-key
 ```
+
+**Round Recap (OpenAI):**
+- **Netlify:** Set `OPENAI_API_KEY` in Site settings → Environment variables (keeps key server-side)
+- **Local/Heroku:** Set `VITE_OPENAI_API_KEY` in `.env` (fallback when serverless unavailable)
 
 ### 4. Run locally
 
