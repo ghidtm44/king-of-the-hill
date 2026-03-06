@@ -153,7 +153,6 @@ export default function GameScreen() {
       .maybeSingle()
     setCurrentStance(stanceData?.stance || null)
 
-    const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
     if (mePlayer?.is_eliminated) {
       const { data: attacksOnMe } = await supabase
         .from('attack_allocations')
