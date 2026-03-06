@@ -16,7 +16,7 @@ export async function evaluateRound(roomId, hourIndex) {
   // Load ALL players (including eliminated) for leaderboard, but survivors for combat
   const { data: allPlayers, error: playersErr } = await supabase
     .from('players')
-    .select('id, session_id, name, attack_points, defense_points, total_points, health_points, current_item_id, is_eliminated')
+    .select('id, session_id, name, attack_points, defense_points, total_points, health_points, current_item_id, item_acquired_round, is_eliminated')
     .eq('room_id', roomId)
 
   if (playersErr || !allPlayers?.length) {
@@ -227,12 +227,19 @@ export async function evaluateRound(roomId, hourIndex) {
     const newPoints = isSurvivor ? p.total_points + scoreGain : p.total_points
     const isEliminated = newHealth <= 0
 
+    // Items expire after 3 rounds
+    const itemExpired = p.current_item_id && p.item_acquired_round != null && (hourIndex - p.item_acquired_round >= 3)
+    const finalItemId = itemExpired ? null : p.current_item_id
+    const finalItemRound = itemExpired ? null : p.item_acquired_round
+
     updates.push({
       id: p.id,
       total_points: newPoints,
       health_points: newHealth,
       is_eliminated: isEliminated,
       last_round_item_id: p.current_item_id,
+      current_item_id: finalItemId,
+      item_acquired_round: finalItemRound,
       previous_round_rank: previousRankBySession[p.session_id],
     })
   }

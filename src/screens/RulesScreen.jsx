@@ -62,6 +62,7 @@ export default function RulesScreen() {
             <li><strong>Armor:</strong> Reduce incoming damage by 1 (6 pts)</li>
             <li><strong>Potion:</strong> Restore 5 HP (5 pts)</li>
           </ul>
+          <p>Items last 3 rounds, then are removed. No refunds.</p>
         </section>
       </div>
     </div>

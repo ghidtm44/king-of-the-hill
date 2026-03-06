@@ -14,10 +14,22 @@ export default function CharacterCreate() {
   const [selectedColor, setSelectedColor] = useState(COLORS[0])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showRulesPopup, setShowRulesPopup] = useState(false)
 
   useEffect(() => {
     loadRoom()
   }, [])
+
+  useEffect(() => {
+    if (!loading && !localStorage.getItem('koth_rules_seen')) {
+      setShowRulesPopup(true)
+    }
+  }, [loading])
+
+  function dismissRulesPopup() {
+    localStorage.setItem('koth_rules_seen', 'true')
+    setShowRulesPopup(false)
+  }
 
   async function loadRoom() {
     let { data, error } = await supabase
@@ -113,6 +125,22 @@ export default function CharacterCreate() {
 
   return (
     <div className="character-create">
+      {showRulesPopup && (
+        <div className="rules-popup-overlay" onClick={dismissRulesPopup}>
+          <div className="rules-popup" onClick={(e) => e.stopPropagation()}>
+            <h3>How to Play</h3>
+            <div className="rules-popup-content">
+              <p><strong>Goal:</strong> Get the most points by the end. Survive by keeping HP above 0.</p>
+              <p><strong>Each round:</strong> Pick one player to attack. If you don't choose, you'll attack randomly.</p>
+              <p><strong>Combat:</strong> Your attack + others' attacks add up. If total exceeds their defense, they take damage (max 5 per round).</p>
+              <p><strong>Bounty:</strong> The player with the most points is the Bounty (🎯). Hitting them gives +2 pts if they take damage—but if they block, you lose 1 HP.</p>
+              <p><strong>Points:</strong> +1 for surviving each round. +1 for dealing damage (+2 if it's the Bounty).</p>
+              <p><strong>Items:</strong> Buy Sword (atk), Shield (def), Armor (reduce damage), or Potion (heal). Items last 3 rounds.</p>
+            </div>
+            <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
+          </div>
+        </div>
+      )}
       <button className="back-btn" onClick={() => navigate('/')}>← BACK</button>
       
       <h1>CREATE WARRIOR</h1>

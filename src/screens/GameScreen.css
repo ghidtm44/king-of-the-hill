@@ -56,16 +56,22 @@
   font-size: 0.5rem;
 }
 
+.my-stats .my-rank {
+  font-weight: bold;
+  color: var(--accent-gold);
+}
+
 .game-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 1fr auto;
   gap: 1rem;
   flex: 1;
   min-height: 0;
 }
 
 .player-list {
-  width: 260px;
-  flex-shrink: 0;
+  grid-row: 1 / -1;
   background: var(--bg-medium);
   border: 4px solid var(--border-pixel);
   padding: 0.75rem;
@@ -253,6 +259,108 @@
   background: var(--bg-medium);
   border: 4px solid var(--border-pixel);
   padding: 1rem;
+}
+
+.store-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.store-section-toggle h3 {
+  margin: 0;
+}
+
+.store-toggle-icon {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.store-section.collapsed .store-section-toggle {
+  margin-bottom: 0;
+}
+
+.store-section.expanded .store-section-toggle {
+  margin-bottom: 0.75rem;
+}
+
+/* Desktop: store always expanded, hide toggle */
+@media (min-width: 769px) {
+  .store-section-toggle {
+    cursor: default;
+  }
+  .store-toggle-icon {
+    display: none;
+  }
+}
+
+/* Mobile: collapsible store */
+@media (max-width: 768px) {
+  .store-section.collapsed .store-section-content {
+    display: none;
+  }
+}
+
+/* Purchase confirmation modal */
+.purchase-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.purchase-confirm-modal {
+  background: var(--bg-medium);
+  border: 4px solid var(--accent-gold);
+  padding: 1.25rem;
+  max-width: 320px;
+  width: 100%;
+}
+
+.purchase-confirm-modal h3 {
+  font-size: 0.6rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--accent-gold);
+}
+
+.purchase-item-name {
+  font-size: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.purchase-warning {
+  font-size: 0.4rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.purchase-confirm-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.purchase-confirm-buttons button {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.45rem;
+}
+
+.purchase-confirm-buttons button:last-child {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+  border: 2px solid #8b6914;
 }
 
 .my-items-section .equipped-item {
@@ -468,7 +576,7 @@
 }
 
 .round-log {
-  margin-top: 1rem;
+  grid-column: 1 / -1;
   background: var(--bg-medium);
   border: 4px solid var(--border-pixel);
   padding: 1rem;
@@ -849,17 +957,24 @@
   }
 
   .game-layout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
   }
 
   .player-list {
+    grid-row: auto;
     width: 100%;
     max-height: 180px;
-    order: 2;
+    order: 1;
   }
 
   .game-main {
-    order: 1;
+    order: 2;
+  }
+
+  .round-log {
+    grid-column: auto;
+    order: 3;
   }
 
   .attack-btn {
