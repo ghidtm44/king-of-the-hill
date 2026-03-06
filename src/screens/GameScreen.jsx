@@ -46,6 +46,7 @@ export default function GameScreen() {
   const [showTutorial, setShowTutorial] = useState(false)
   const bountyBadgeRef = useRef(null)
   const bountyTooltipRef = useRef(null)
+  const gameEndCheckRanThisHourRef = useRef(false)
 
   const loadData = useCallback(async () => {
     if (!roomId || !sessionId) {
@@ -338,6 +339,8 @@ export default function GameScreen() {
     loadPlayerHistory()
   }, [selectedPlayer, roomId])
 
+  const [gameEnded, setGameEnded] = useState(null)
+
   useEffect(() => {
     const tick = () => {
       const { minutes, seconds } = getTimeUntilNextHour()
@@ -347,25 +350,29 @@ export default function GameScreen() {
       if (isEvaluationSecond) {
         evaluateRound(roomId, hi).then(() => loadData())
       }
+      // Reset ref when not in noon hour so we can run again next day
+      if (!shouldEndPreviousGame()) gameEndCheckRanThisHourRef.current = false
+      // Game reset at noon EST: check every second so we detect the transition from 11:59 to 12:00
+      if (shouldEndPreviousGame() && roomId && !gameEndCheckRanThisHourRef.current) {
+        gameEndCheckRanThisHourRef.current = true
+        checkAndEndGame(roomId).then((r) => {
+          if (r.winner) {
+            setGameEnded(r.winner)
+            localStorage.removeItem('koth_room_id')
+            localStorage.removeItem('koth_session_id')
+          } else if (r.alreadyRecorded) {
+            // Another client already ended the game; clear and redirect to create
+            localStorage.removeItem('koth_room_id')
+            localStorage.removeItem('koth_session_id')
+            navigate('/create', { replace: true })
+          }
+        })
+      }
     }
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [roomId, loadData])
-
-  const [gameEnded, setGameEnded] = useState(null)
-
-  useEffect(() => {
-    if (shouldEndPreviousGame() && roomId) {
-      checkAndEndGame(roomId).then((r) => {
-        if (r.winner) {
-          setGameEnded(r.winner)
-          localStorage.removeItem('koth_room_id')
-          localStorage.removeItem('koth_session_id')
-        }
-      })
-    }
-  }, [roomId])
 
   async function persistAttackTarget(targetSessionId) {
     if (!me || me.is_eliminated || !roomId || !sessionId) return

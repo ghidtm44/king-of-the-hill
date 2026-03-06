@@ -26,12 +26,26 @@ export const MAX_NAME_LENGTH = 10
 // Round interval: 3600 = hourly (production). Use 120 for testing.
 export const ROUND_INTERVAL_SECONDS = 3600
 
+const EST_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  hour12: false,
+})
+
+/** Get hours, minutes, seconds in EST for a given date. */
+function getESTParts(date = new Date()) {
+  const parts = EST_FORMATTER.formatToParts(date)
+  return {
+    hours: parseInt(parts.find((p) => p.type === 'hour').value, 10),
+    minutes: parseInt(parts.find((p) => p.type === 'minute').value, 10),
+    seconds: parseInt(parts.find((p) => p.type === 'second').value, 10),
+  }
+}
+
 export function getCurrentHourIndex() {
-  const now = new Date()
-  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const hours = est.getHours()
-  const minutes = est.getMinutes()
-  const seconds = est.getSeconds()
+  const { hours, minutes, seconds } = getESTParts()
   // Round 1 at 12pm, Round 24 at 11am. Game runs 12pm–11:59am EST.
   const hourFromStart = hours >= 12 ? hours - 12 : hours + 12
   const roundIndex = hourFromStart + 1
@@ -49,9 +63,7 @@ export function isGameActive() {
 
 // Only true at noon EST—when we need to clean up the previous game before the new one starts.
 export function shouldEndPreviousGame() {
-  const now = new Date()
-  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const hours = est.getHours()
+  const { hours } = getESTParts()
   return hours === 12
 }
 
@@ -85,10 +97,7 @@ export function canNewPlayerAttackInFirstRound(joinedAt, currentHourIndex) {
 }
 
 export function getTimeUntilNextHour() {
-  const now = new Date()
-  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const minutes = est.getMinutes()
-  const seconds = est.getSeconds()
+  const { minutes, seconds } = getESTParts()
   const secondsIntoRound = minutes * 60 + seconds
   const secondsUntilEval = Math.max(0, ROUND_INTERVAL_SECONDS - 1 - secondsIntoRound)
 
