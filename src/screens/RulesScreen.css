@@ -1,0 +1,60 @@
+.rules-screen {
+  min-height: 100vh;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.rules-screen .back-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.rules-screen .back-btn:hover {
+  color: var(--accent-gold);
+}
+
+.rules-screen h1 {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.rules-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rules-content section h2 {
+  font-size: 0.6rem;
+  color: var(--accent-gold);
+  margin-bottom: 0.5rem;
+}
+
+.rules-content section p,
+.rules-content section li {
+  font-size: 0.45rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.rules-content ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.rules-content li {
+  padding-left: 1rem;
+  position: relative;
+}
+
+.rules-content li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--accent-gold);
+}

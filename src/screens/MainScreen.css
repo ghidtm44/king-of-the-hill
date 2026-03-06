@@ -1,0 +1,144 @@
+.main-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.castle-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  z-index: 0;
+}
+
+.hill {
+  position: absolute;
+  bottom: 0;
+  left: -5%;
+  right: -5%;
+  height: 45%;
+  background: linear-gradient(180deg, #2d5a27 0%, #1a3d16 100%);
+  border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+  box-shadow: inset 0 -20px 40px rgba(0,0,0,0.3);
+}
+
+.castle {
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 120px;
+  background: linear-gradient(180deg, #6b6b6b 0%, #4a4a4a 100%);
+  border: 4px solid #3a3a3a;
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px #5a5a5a;
+}
+
+.castle::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 35px solid #4a4a4a;
+}
+
+.castle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 80px;
+  background: #2a2a2a;
+  border: 4px solid #1a1a1a;
+}
+
+.crowd {
+  position: absolute;
+  bottom: 8%;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1;
+}
+
+.crowd-character {
+  position: absolute;
+  bottom: 0;
+  animation: crowd-bounce 2s ease-in-out infinite;
+}
+
+@keyframes crowd-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.main-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 2rem;
+}
+
+.title {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--accent-gold);
+  text-shadow: 4px 4px 0 #8b6914;
+  margin-bottom: 0.5rem;
+  letter-spacing: 4px;
+}
+
+.subtitle {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-bottom: 3rem;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.menu-btn {
+  padding: 1rem 2rem;
+  font-size: 0.7rem;
+  background: var(--bg-light);
+  color: var(--text-primary);
+  border: 4px solid var(--border-pixel);
+  min-width: 220px;
+  transition: all 0.15s;
+}
+
+.menu-btn:hover {
+  background: var(--bg-medium);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  transform: scale(1.05);
+}
+
+.menu-btn.primary {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+  border-color: #8b6914;
+}
+
+.menu-btn.primary:hover {
+  background: #ffd700;
+  border-color: var(--accent-gold);
+  color: var(--bg-dark);
+}

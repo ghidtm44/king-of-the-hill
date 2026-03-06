@@ -1,0 +1,77 @@
+.pixel-knight {
+  --knight-color: #c41e3a;
+  image-rendering: pixelated;
+}
+
+.pixel-knight.small {
+  transform: scale(0.5);
+}
+
+.pixel-knight.medium {
+  transform: scale(1);
+}
+
+.pixel-knight.large {
+  transform: scale(1.5);
+}
+
+.knight-body {
+  position: relative;
+  width: 32px;
+  height: 48px;
+}
+
+.knight-head {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  background: #d4a574;
+  border: 2px solid #8b6914;
+  image-rendering: pixelated;
+}
+
+.knight-torso {
+  position: absolute;
+  top: 16px;
+  left: 4px;
+  width: 24px;
+  height: 20px;
+  background: var(--knight-color);
+  border: 2px solid color-mix(in srgb, var(--knight-color) 70%, black);
+  image-rendering: pixelated;
+}
+
+.knight-legs {
+  position: absolute;
+  top: 36px;
+  left: 6px;
+  width: 20px;
+  height: 12px;
+  background: #4a4a4a;
+  border: 2px solid #2a2a2a;
+  image-rendering: pixelated;
+}
+
+.knight-sword {
+  position: absolute;
+  top: 12px;
+  right: -8px;
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(90deg, #888 0%, #ccc 50%, #888 100%);
+  border: 1px solid #666;
+  transform: rotate(-15deg);
+}
+
+.knight-shield {
+  position: absolute;
+  top: 18px;
+  left: -6px;
+  width: 10px;
+  height: 14px;
+  background: #8b6914;
+  border: 2px solid #5a4010;
+  border-radius: 2px;
+}

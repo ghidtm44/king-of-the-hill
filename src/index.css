@@ -1,0 +1,49 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --pixel-size: 4px;
+  --bg-dark: #1a1a2e;
+  --bg-medium: #16213e;
+  --bg-light: #0f3460;
+  --accent-gold: #e6b800;
+  --accent-red: #c41e3a;
+  --accent-green: #2d6a4f;
+  --text-primary: #eaeaea;
+  --text-muted: #a0a0a0;
+  --border-pixel: #4a4a6a;
+}
+
+body {
+  font-family: 'Press Start 2P', cursive;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Retro pixel scaling */
+canvas, img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Pixelated scaling */
+.pixel-border {
+  border: var(--pixel-size) solid var(--border-pixel);
+  image-rendering: pixelated;
+}
+
+button {
+  font-family: 'Press Start 2P', cursive;
+  cursor: pointer;
+  image-rendering: pixelated;
+}
+
+input {
+  font-family: 'Press Start 2P', cursive;
+}
