@@ -16,10 +16,8 @@ export default function RulesScreen() {
       <div className="rules-content">
         <section>
           <h2>GOAL</h2>
-          <p>Wolfpack Warriors is a simple daily strategy game where players compete over a 24-hour period to finish with the most Points while staying alive.</p>
-          <p>Every hour, players choose one opponent to attack. If enough players attack the same target, that player takes damage. If their Health reaches zero, they're eliminated from the game. Survive longer, make smart attacks, and you'll climb the leaderboard.</p>
-          <p>Points come from successful attacks and surviving each round, and can also be spent on items that help you fight or stay alive. The player with the most points becomes the Bounty, making them a more valuable — and more dangerous — target.</p>
-          <p>The game resets every day at 12:00 PM EST, so each round is a fresh chance to claim the hill.</p>
+          <p>Wolfpack Warriors is a daily strategy game. Compete over 24 hours to finish with the most Points while staying alive. The game resets at 12:00 PM EST.</p>
+          <p>Every hour is one round. Pick a target to attack. When the round ends, attacks are resolved and points are awarded. Highest points at the end of the 24 hours wins.</p>
         </section>
 
         <section>
@@ -36,30 +34,41 @@ export default function RulesScreen() {
 
         <section>
           <h2>EACH ROUND</h2>
-          <p>Tap a player to attack them—your choice saves immediately. Tap another to switch, or tap the same one to clear. No target? You don't attack that round.</p>
+          <p>Tap a player to attack them—your choice saves immediately. Tap another to switch, or tap the same one to clear. No target = no attack that round.</p>
         </section>
 
         <section>
           <h2>COMBAT</h2>
-          <p>For each target: add up all attackers' Attack values. Damage = Total Attack − Defense (capped at 5 per round).</p>
-          <p>If damage &gt; 0: target loses HP. Each attacker gets +1 Point (+2 if it was the Bounty).</p>
+          <p>When the round ends, attacks are resolved:</p>
+          <ol>
+            <li>For each target, add up all attackers' Attack values.</li>
+            <li>Damage = Total Attack − Defense (capped at 5 per round).</li>
+            <li>If damage &gt; 0: target loses HP. If damage = 0: target blocks.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>POINTS (End of Round)</h2>
+          <p>Everyone gets these:</p>
+          <ul>
+            <li><strong>+1</strong> for surviving the round</li>
+          </ul>
+          <p>If you attacked:</p>
+          <ul>
+            <li><strong>+1</strong> if you dealt damage (+2 if target was the Bounty)</li>
+            <li><strong>−1</strong> if you dealt 0 damage (target blocked)</li>
+          </ul>
+          <p>If you were attacked:</p>
+          <ul>
+            <li><strong>+1</strong> if you blocked (took 0 damage)</li>
+            <li><strong>−1</strong> if you took any HP damage</li>
+          </ul>
+          <p>Points can be spent on items.</p>
         </section>
 
         <section>
           <h2>BOUNTY</h2>
-          <p>The player with the most Points is the Bounty (🎯). Hitting them gives +2 pts if they take damage. But if they block (take 0 damage), each attacker loses 1 HP.</p>
-        </section>
-
-        <section>
-          <h2>POINTS</h2>
-          <ul>
-            <li>+1 for surviving each round</li>
-            <li>+1 for dealing damage (+2 if Bounty)</li>
-            <li>−1 if you take any HP damage in a round</li>
-            <li>+1 if you're attacked but block (take 0 damage)</li>
-            <li>−1 if you attack but deal 0 damage (target blocked)</li>
-            <li>Spend points on items</li>
-          </ul>
+          <p>The player with the most Points is the Bounty (🎯). Hitting them gives +2 pts if they take damage. But if they block, each attacker loses 1 HP.</p>
         </section>
 
         <section>
@@ -79,14 +88,13 @@ export default function RulesScreen() {
 
         <section>
           <h2>ITEMS</h2>
-          <p>Hold 1 item at a time. Buying a new one replaces the old.</p>
+          <p>Hold 1 item at a time. Buying a new one replaces the old. Items last 3 rounds and are not refundable.</p>
           <ul>
             <li><strong>Sword:</strong> +1 {ICON_ATK} (4 pts)</li>
             <li><strong>Shield:</strong> +1 {ICON_DEF} (4 pts)</li>
             <li><strong>Armor:</strong> Reduce incoming damage by 1 (6 pts)</li>
             <li><strong>Potion:</strong> Restore 5 HP (5 pts)</li>
           </ul>
-          <p>Items last 3 rounds, then are removed. No refunds.</p>
         </section>
       </div>
     </div>
