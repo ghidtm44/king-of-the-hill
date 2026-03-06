@@ -982,13 +982,10 @@
 }
 
 .scavenge-result-inline .scavenge-result-msg {
-  margin: 0;
   font-size: 0.4rem;
-  flex: 1 1 auto;
 }
 
 .scavenge-result-inline .scavenge-result-detail {
-  margin: 0;
   font-size: 0.38rem;
   color: var(--accent-gold);
 }

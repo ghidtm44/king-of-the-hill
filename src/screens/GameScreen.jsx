@@ -46,6 +46,7 @@ export default function GameScreen() {
   const [showTutorial, setShowTutorial] = useState(false)
   const bountyBadgeRef = useRef(null)
   const bountyTooltipRef = useRef(null)
+  const justScavengedRef = useRef(false)
   const gameEndCheckRanThisHourRef = useRef(false)
 
   const loadData = useCallback(async () => {
@@ -159,7 +160,8 @@ export default function GameScreen() {
       const pointsGain = r === 'coins' ? 1 : r === 'treasure' ? 3 : 0
       const hpChange = r === 'ambushed' ? -1 : 0
       setLastScavengeResultThisRound({ result: r, pointsGain, hpChange, msg })
-    } else {
+      justScavengedRef.current = false
+    } else if (!justScavengedRef.current) {
       setLastScavengeResultThisRound(null)
     }
 
@@ -447,6 +449,14 @@ export default function GameScreen() {
     })
     if (insertErr?.code === '23505') {
       setScavengeUsedThisRound(true)
+      const { data: existing } = await supabase.from('scavenge_uses').select('result').eq('room_id', roomId).eq('session_id', sessionId).eq('hour_index', hourIndex).maybeSingle()
+      if (existing?.result) {
+        const r = existing.result
+        const msg = r === 'coins' ? '+1 Point!' : r === 'treasure' ? '+3 Points!' : r === 'ambushed' ? '-1 HP' : 'Nothing found'
+        const pointsGain = r === 'coins' ? 1 : r === 'treasure' ? 3 : 0
+        const hpChange = r === 'ambushed' ? -1 : 0
+        setLastScavengeResultThisRound({ result: r, pointsGain, hpChange, msg })
+      }
       return
     }
     if (insertErr) return
@@ -459,6 +469,7 @@ export default function GameScreen() {
     setLastScavengeResultThisRound(resultData)
     setScavengeResult(resultData)
     setTimeout(() => setScavengeResult(null), 3500)
+    justScavengedRef.current = true
     loadData()
   }
 
@@ -826,30 +837,29 @@ export default function GameScreen() {
 
         <section className="scavenge-section">
           <h3 className="scavenge-section-title">🔍 SCAVENGE</h3>
-          {!scavengeUsedThisRound ? (
-            <div className="scavenge-section-content">
-              <button
-                type="button"
-                className="scavenge-btn"
-                onClick={handleScavenge}
-                disabled={me?.is_eliminated}
-                title="Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP"
-              >
-                🔍 Scavenge
-              </button>
-              <span className="scavenge-hint">Once per round. Chance for +pts or -HP</span>
-            </div>
-          ) : lastScavengeResultThisRound ? (
-            <div className={`scavenge-result-inline scavenge-${lastScavengeResultThisRound.result}`}>
-              {lastScavengeResultThisRound.result === 'coins' && <span className="scavenge-icon">🪙</span>}
-              {lastScavengeResultThisRound.result === 'treasure' && <span className="scavenge-icon">💎</span>}
-              {lastScavengeResultThisRound.result === 'nothing' && <span className="scavenge-icon">🔍</span>}
-              {lastScavengeResultThisRound.result === 'ambushed' && <span className="scavenge-icon">⚔️</span>}
-              <p className="scavenge-result-msg">{lastScavengeResultThisRound.msg}</p>
-              {lastScavengeResultThisRound.pointsGain > 0 && <p className="scavenge-result-detail">+{lastScavengeResultThisRound.pointsGain} point{lastScavengeResultThisRound.pointsGain > 1 ? 's' : ''}</p>}
-              {lastScavengeResultThisRound.hpChange < 0 && <p className="scavenge-result-detail scavenge-negative">{lastScavengeResultThisRound.hpChange} HP</p>}
-            </div>
-          ) : null}
+          <div className="scavenge-section-content">
+            <button
+              type="button"
+              className={`scavenge-btn ${scavengeUsedThisRound ? 'used' : ''}`}
+              onClick={handleScavenge}
+              disabled={me?.is_eliminated || scavengeUsedThisRound}
+              title={scavengeUsedThisRound ? 'Already scavenged this round' : 'Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP'}
+            >
+              🔍 Scavenge
+            </button>
+            {!scavengeUsedThisRound && <span className="scavenge-hint">Once per round. Chance for +pts or -HP</span>}
+            {scavengeUsedThisRound && lastScavengeResultThisRound && (
+              <div className={`scavenge-result-inline scavenge-${lastScavengeResultThisRound.result}`}>
+                {lastScavengeResultThisRound.result === 'coins' && <span className="scavenge-icon">🪙</span>}
+                {lastScavengeResultThisRound.result === 'treasure' && <span className="scavenge-icon">💎</span>}
+                {lastScavengeResultThisRound.result === 'nothing' && <span className="scavenge-icon">🔍</span>}
+                {lastScavengeResultThisRound.result === 'ambushed' && <span className="scavenge-icon">⚔️</span>}
+                <span className="scavenge-result-msg">{lastScavengeResultThisRound.msg}</span>
+                {lastScavengeResultThisRound.pointsGain > 0 && <span className="scavenge-result-detail">+{lastScavengeResultThisRound.pointsGain} pt{lastScavengeResultThisRound.pointsGain > 1 ? 's' : ''}</span>}
+                {lastScavengeResultThisRound.hpChange < 0 && <span className="scavenge-result-detail scavenge-negative">{lastScavengeResultThisRound.hpChange} HP</span>}
+              </div>
+            )}
+          </div>
         </section>
 
         <div className="bottom-drawers">
