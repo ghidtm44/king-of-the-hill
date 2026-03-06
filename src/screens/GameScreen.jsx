@@ -530,10 +530,12 @@ export default function GameScreen() {
                 )}
                 <PixelKnight color={p.color} size="small" />
                 <div className="player-info">
-                  <span className="name">
-                    {isTarget && <span className="target-badge" title="Your attack target">{ICON_ATK}</span>}
-                    {p.name}
-                  </span>
+                  {isTarget && (
+                    <span className="target-label" title="Your attack target">
+                      {ICON_ATK} Your target
+                    </span>
+                  )}
+                  <span className="name">{p.name}</span>
                   <span className="class-label player-detail-mobile">{p.class_type}</span>
                   <span className="points">{p.total_points} pts</span>
                   <span className="player-detail-mobile player-detail-health">
@@ -577,6 +579,7 @@ export default function GameScreen() {
                       disabled={me.is_eliminated}
                       aria-label={`Attack ${p.name}`}
                     >
+                      {isSelected && <span className="target-label-badge">{ICON_ATK} Your target</span>}
                       {isBounty && <span className="bounty-badge">🎯</span>}
                       <PixelKnight color={p.color} size="small" />
                       <span className="target-name">{p.name}</span>

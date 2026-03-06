@@ -148,10 +148,24 @@
   background: var(--accent-gold);
 }
 
-.target-badge {
-  margin-right: 0.25rem;
-  opacity: 0.9;
-  font-size: 0.45rem;
+.target-label {
+  display: block;
+  font-size: 0.35rem;
+  font-weight: bold;
+  color: var(--accent-gold);
+  margin-bottom: 0.15rem;
+}
+
+.attack-target .target-label-badge {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  font-size: 0.3rem;
+  font-weight: bold;
+  color: var(--accent-gold);
+  background: rgba(235, 200, 50, 0.2);
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--accent-gold);
 }
 
 .bounty-label-wrap {
@@ -467,6 +481,7 @@
 }
 
 .attack-target {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
