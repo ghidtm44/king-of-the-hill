@@ -309,6 +309,7 @@ export default function GameScreen() {
     if (!me || !roundResults.length) return
     setRecapModal('full_game')
     setRecapData(null)
+    const evaluatedHourIndices = new Set(roundResults.map((r) => r.hour_index))
     const { data: allAttacks } = await supabase
       .from('attack_allocations')
       .select('*')
@@ -319,6 +320,7 @@ export default function GameScreen() {
       byRound[a.hour_index].push(a)
     })
     const rounds = Object.entries(byRound)
+      .filter(([hi]) => evaluatedHourIndices.has(Number(hi)))
       .sort((a, b) => Number(b[0]) - Number(a[0]))
       .slice(0, 10)
       .map(([hi, attacks]) => ({ hourIndex: Number(hi), attacks }))
