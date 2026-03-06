@@ -673,6 +673,10 @@ export default function GameScreen() {
       <div className="game-layout">
         <aside className="player-list">
           <h3>RANKINGS <span className="player-count">({players.length})</span></h3>
+          <div className="rankings-legend">
+            <span className="legend-item legend-red" title="Attacked you last round">Red: Attacked you</span>
+            <span className="legend-item legend-green" title="Attacked same player as you last round">Green: Same target</span>
+          </div>
           <div className="player-list-scroll">
           {players.map((p, i) => {
             const isMe = p.session_id === sessionId
@@ -680,6 +684,8 @@ export default function GameScreen() {
             const pDefense = isMe ? effectiveDefense : p.defense_points
             const isBounty = p.session_id === bountySessionId
             const isTarget = selectedTargetId === p.session_id && p.session_id !== sessionId
+            const attackedMeLastRound = lastRoundAttackersOnMe.has(p.session_id)
+            const hadSameEnemyLastRound = lastRoundSameTargetAttackers.has(p.session_id)
             const currentRank = i + 1
             const prevRank = p.previous_round_rank
             const rankChange = prevRank == null ? 'same' : currentRank < prevRank ? 'up' : currentRank > prevRank ? 'down' : 'same'
@@ -688,7 +694,7 @@ export default function GameScreen() {
                 key={p.id}
                 role="button"
                 tabIndex={0}
-                className={`player-row ${p.is_eliminated ? 'eliminated' : ''} ${p.session_id === sessionId ? 'me' : ''} ${selectedPlayer?.id === p.id ? 'selected' : ''} ${isBounty ? 'bounty' : ''} ${isTarget ? 'attacking' : ''}`}
+                className={`player-row ${p.is_eliminated ? 'eliminated' : ''} ${p.session_id === sessionId ? 'me' : ''} ${selectedPlayer?.id === p.id ? 'selected' : ''} ${isBounty ? 'bounty' : ''} ${attackedMeLastRound ? 'attacked-you' : ''} ${hadSameEnemyLastRound ? 'same-target' : ''}`}
                 onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
               >
@@ -716,8 +722,8 @@ export default function GameScreen() {
                 <PixelKnight color={p.color} size="small" />
                 <div className="player-info">
                   {isTarget && (
-                    <span className="target-label" title="Your attack target">
-                      {ICON_ATK} Your target
+                    <span className="target-label-wrap" title="Your attack target">
+                      <span className="target-badge">{ICON_ATK} CURRENT TARGET</span>
                     </span>
                   )}
                   <span className="name">{p.name}</span>

@@ -376,8 +376,14 @@
   opacity: 0.5;
 }
 
-.player-row.me {
-  border-color: var(--accent-gold);
+.player-row.attacked-you {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 2px var(--accent-red);
+}
+
+.player-row.same-target {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px var(--accent-green);
 }
 
 .player-row.selected {
@@ -385,25 +391,49 @@
   box-shadow: 0 0 0 2px var(--accent-gold);
 }
 
-.player-row.bounty {
-  border-color: var(--accent-red);
-  box-shadow: 0 0 0 2px var(--accent-red);
+.rankings-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.3rem;
+  color: var(--text-muted);
 }
 
-.player-row.attacking {
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 0 2px var(--accent-gold);
-  position: relative;
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-.player-row.attacking::before {
+.legend-item::before {
   content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--accent-gold);
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 2px solid;
+}
+
+.legend-red::before {
+  border-color: var(--accent-red);
+}
+
+.legend-green::before {
+  border-color: var(--accent-green);
+}
+
+.target-label-wrap {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.target-badge {
+  font-size: 0.35rem;
+  font-weight: bold;
+  color: var(--accent-gold);
+  padding: 0.1rem 0.25rem;
+  background: rgba(230, 184, 0, 0.2);
+  border: 1px solid var(--accent-gold);
+  white-space: nowrap;
 }
 
 .target-label {
@@ -1505,6 +1535,11 @@
   }
 
   .player-list-scroll > .player-row .bounty-badge {
+    font-size: 0.3rem;
+    padding: 0.05rem 0.15rem;
+  }
+
+  .player-list-scroll > .player-row .target-badge {
     font-size: 0.3rem;
     padding: 0.05rem 0.15rem;
   }
