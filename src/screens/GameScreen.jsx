@@ -153,15 +153,16 @@ export default function GameScreen() {
       .eq('session_id', sid)
       .eq('hour_index', hi)
       .maybeSingle()
-    setScavengeUsedThisRound(!!scavengeData)
     if (scavengeData?.result) {
       const r = scavengeData.result
       const msg = r === 'coins' ? '+1 Point!' : r === 'treasure' ? '+3 Points!' : r === 'ambushed' ? '-1 HP' : 'Nothing found'
       const pointsGain = r === 'coins' ? 1 : r === 'treasure' ? 3 : 0
       const hpChange = r === 'ambushed' ? -1 : 0
+      setScavengeUsedThisRound(true)
       setLastScavengeResultThisRound({ result: r, pointsGain, hpChange, msg })
       justScavengedRef.current = false
     } else if (!justScavengedRef.current) {
+      setScavengeUsedThisRound(false)
       setLastScavengeResultThisRound(null)
     }
 
