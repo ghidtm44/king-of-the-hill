@@ -143,7 +143,8 @@ export default function CharacterCreate() {
     // Set both before navigate - critical for GameScreen to find them
     localStorage.setItem('koth_room_id', String(room.id))
     localStorage.setItem('koth_session_id', sessionId)
-    navigate('/game', { state: { showTutorial: true } })
+    // Use full page navigation to avoid desktop form-submit refresh race (SPA navigate can be preempted)
+    window.location.href = '/game'
   }
 
   if (loading) return <div className="loading">Loading...</div>
@@ -170,7 +171,7 @@ export default function CharacterCreate() {
       <h1>CREATE WARRIOR</h1>
       <p className="room-info">Main Arena ({playerCount}/25)</p>
 
-      <form onSubmit={handleSubmit} className="create-form">
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="create-form" action="javascript:void(0)">
         <div className="form-group">
           <label>NAME (max {MAX_NAME_LENGTH})</label>
           <input
