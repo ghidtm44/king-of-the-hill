@@ -71,11 +71,10 @@ export default function MainScreen() {
 
   return (
     <div className="main-screen">
-      <div className="castle-bg">
+      <div className="main-bg">
         <div className="hill"></div>
         <div className="castle"></div>
       </div>
-      
       <div className="crowd">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="crowd-character" style={{ left: `${10 + i * 12}%`, animationDelay: `${i * 0.2}s` }}>
@@ -84,54 +83,58 @@ export default function MainScreen() {
         ))}
       </div>
 
-      <p className="footer-credit footer-credit-desktop">A game created by Todd G</p>
-
       <div className="main-content">
-        <h1 className="title">WOLFPACK WARRIORS</h1>
-        <p className="footer-credit footer-credit-mobile">A game created by Todd G</p>
-        <p className="subtitle">Battle Arena</p>
+        <div className="hero-card">
+          <h1 className="title">WOLFPACK WARRIORS</h1>
+          <p className="subtitle">Battle Arena</p>
 
-        <div className="menu-buttons">
-          {hasActiveGame && (
-            <button className="menu-btn back-to-game" onClick={() => navigate('/game')}>
-              BACK TO MY CHARACTER
+          <nav className="menu-buttons">
+            {hasActiveGame && (
+              <button className="menu-btn back-to-game" onClick={() => navigate('/game')}>
+                BACK TO MY CHARACTER
+              </button>
+            )}
+            <button className="menu-btn primary" onClick={() => navigate('/create')}>
+              START GAME
             </button>
-          )}
-          <button className="menu-btn primary" onClick={() => navigate('/create')}>
-            START GAME
-          </button>
-          <button className="menu-btn" onClick={() => navigate('/rules')}>
-            RULES
-          </button>
-          <button className="menu-btn" onClick={() => navigate('/hall-of-fame')}>
-            HALL OF FAME
-          </button>
+            <button className="menu-btn" onClick={() => navigate('/rules')}>
+              RULES
+            </button>
+            <button className="menu-btn" onClick={() => navigate('/hall-of-fame')}>
+              HALL OF FAME
+            </button>
+          </nav>
+
+          <div className="load-code-section">
+            <form onSubmit={handleLoadByCode} className="load-code-form">
+              <label htmlFor="recovery-code" className="load-code-label">Have a code?</label>
+              <div className="load-code-row">
+                <input
+                  id="recovery-code"
+                  type="text"
+                  value={loadCode}
+                  onChange={(e) => setLoadCode(e.target.value.slice(0, 5).toUpperCase())}
+                  placeholder="XXXXX"
+                  maxLength={5}
+                  className="load-code-input"
+                  disabled={loadingCode}
+                  autoComplete="off"
+                />
+                <button type="submit" className="load-code-btn" disabled={loadingCode}>
+                  {loadingCode ? '...' : 'LOAD'}
+                </button>
+              </div>
+            </form>
+            {loadError && (
+              <div className="load-code-error" role="alert">
+                {loadError}
+                <button type="button" className="load-code-dismiss" onClick={() => setLoadError(null)} aria-label="Dismiss">×</button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="load-code-section">
-          <p className="load-code-label">Load character on this device</p>
-          <form onSubmit={handleLoadByCode} className="load-code-form">
-            <input
-              type="text"
-              value={loadCode}
-              onChange={(e) => setLoadCode(e.target.value.slice(0, 5).toUpperCase())}
-              placeholder="Enter 5-char code"
-              maxLength={5}
-              className="load-code-input"
-              disabled={loadingCode}
-              autoComplete="off"
-            />
-            <button type="submit" className="menu-btn load-code-btn" disabled={loadingCode}>
-              {loadingCode ? '...' : 'LOAD'}
-            </button>
-          </form>
-          {loadError && (
-            <div className="load-code-error" role="alert">
-              {loadError}
-              <button type="button" className="load-code-dismiss" onClick={() => setLoadError(null)} aria-label="Dismiss">×</button>
-            </div>
-          )}
-        </div>
+        <p className="footer-credit">A game created by Todd G</p>
       </div>
     </div>
   )
