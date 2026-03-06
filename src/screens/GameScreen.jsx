@@ -674,8 +674,8 @@ export default function GameScreen() {
         <aside className="player-list">
           <h3>RANKINGS <span className="player-count">({players.length})</span></h3>
           <div className="rankings-legend">
-            <span className="legend-item legend-red" title="Attacked you last round">Red: Attacked you</span>
-            <span className="legend-item legend-green" title="Attacked same player as you last round">Green: Same target</span>
+            <span className="legend-item legend-red" title="Attacked you last round">Red: Attacked you last round</span>
+            <span className="legend-item legend-green" title="Attacked same player as you last round">Green: Same target last round</span>
           </div>
           <div className="player-list-scroll">
           {players.map((p, i) => {
