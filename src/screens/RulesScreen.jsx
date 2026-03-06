@@ -1,13 +1,15 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ICON_ATK, ICON_DEF } from '../lib/gameLogic'
 import './RulesScreen.css'
 
 export default function RulesScreen() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromGame = location.state?.from === 'game'
 
   return (
     <div className="rules-screen">
-      <button className="back-btn" onClick={() => navigate('/')}>← BACK</button>
+      <button className="back-btn" onClick={() => navigate(fromGame ? '/game' : '/')}>← BACK</button>
       
       <h1>RULES</h1>
       
@@ -16,6 +18,7 @@ export default function RulesScreen() {
           <h2>GOAL</h2>
           <p>Have the most Points at the end. Stay alive by keeping HP above 0.</p>
           <p>The game lasts 24 hours (12pm EST to 11:59am EST).</p>
+          <p><strong>Strategy:</strong> Eliminate your opponents—when HP hits 0, they're out. Players can team up on common enemies: if multiple people attack the same target, damage adds up. Pick your targets wisely, defend when needed, and use items to gain an edge.</p>
         </section>
 
         <section>

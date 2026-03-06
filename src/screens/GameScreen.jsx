@@ -600,7 +600,7 @@ export default function GameScreen() {
     <div className="game-screen">
       <div className="game-header">
         <button className="back-btn" onClick={() => navigate('/')}>← EXIT</button>
-        <Link to="/rules" className="rules-link" title="View rules">📖 Rules</Link>
+        <Link to="/rules" state={{ from: 'game' }} className="rules-link" title="View rules">📖 Rules</Link>
         <div className="timer">
           Next round: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
         </div>

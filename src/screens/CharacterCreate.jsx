@@ -130,7 +130,7 @@ export default function CharacterCreate() {
           <div className="rules-popup" onClick={(e) => e.stopPropagation()}>
             <h3>How to Play</h3>
             <div className="rules-popup-content">
-              <p><strong>Goal:</strong> Most points wins. Stay alive (HP &gt; 0). Game lasts 24 hrs (12pm–11:59am EST).</p>
+              <p><strong>Goal:</strong> Most points wins. Eliminate opponents (HP → 0 = out). Team up on targets—combined attacks deal more damage. Game lasts 24 hrs (12pm–11:59am EST).</p>
               <p><strong>Each round:</strong> Tap a player to attack them—saves instantly. Tap another to switch, or tap same to clear. No target = random.</p>
               <p><strong>Combat:</strong> Total attack vs defense. Damage capped at 5/round.</p>
               <p><strong>Bounty</strong> (🎯): Most points. Hit them = +2 pts if damage dealt. Block = you lose 1 HP.</p>
