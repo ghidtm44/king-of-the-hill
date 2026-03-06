@@ -16,9 +16,10 @@ export default function RulesScreen() {
       <div className="rules-content">
         <section>
           <h2>GOAL</h2>
-          <p>Have the most Points at the end. Stay alive by keeping HP above 0.</p>
-          <p>The game lasts 24 hours (12pm EST to 11:59am EST).</p>
-          <p><strong>Strategy:</strong> Eliminate your opponents—when HP hits 0, they're out. Players can team up on common enemies: if multiple people attack the same target, damage adds up. Pick your targets wisely, defend when needed, and use items to gain an edge.</p>
+          <p>Wolfpack Warriors is a simple daily strategy game where players compete over a 24-hour period to finish with the most Points while staying alive.</p>
+          <p>Every hour, players choose one opponent to attack. If enough players attack the same target, that player takes damage. If their Health reaches zero, they're eliminated from the game. Survive longer, make smart attacks, and you'll climb the leaderboard.</p>
+          <p>Points come from successful attacks and surviving each round, and can also be spent on items that help you fight or stay alive. The player with the most points becomes the Bounty, making them a more valuable — and more dangerous — target.</p>
+          <p>The game resets every day at 12:00 PM EST, so each round is a fresh chance to claim the hill.</p>
         </section>
 
         <section>
