@@ -130,14 +130,11 @@ export default function CharacterCreate() {
           <div className="rules-popup" onClick={(e) => e.stopPropagation()}>
             <h3>How to Play</h3>
             <div className="rules-popup-content">
-              <p><strong>Goal:</strong> Most points wins. Eliminate opponents (HP → 0 = out). Team up on targets—combined attacks deal more damage. Game lasts 24 hrs (12pm–11:59am EST).</p>
-              <p><strong>Each round:</strong> Tap a player to attack them—saves instantly. Tap another to switch, or tap same to clear. No target = no attack.</p>
-              <p><strong>Combat:</strong> Total attack vs defense. Damage capped at 5/round.</p>
-              <p><strong>Bounty</strong> (🎯): Most points. Hit them = +2 pts if damage dealt. Block = you lose 1 HP.</p>
-              <p><strong>Points:</strong> +1 survive, +1 damage (+2 if Bounty).</p>
-              <p><strong>Items:</strong> Sword ({ICON_ATK}), Shield ({ICON_DEF}), Armor, Potion. Last 3 rounds.</p>
-              <p><strong>Scavenge:</strong> Once/round. Chance: +1 pt, +3 pts, nothing, or -1 HP.</p>
-              <p><strong>Stance:</strong> Aggressive +1 {ICON_ATK} · Defensive +1 {ICON_DEF} · Greedy +1 pt if survive.</p>
+              <p>Wolfpack Warriors is a simple daily strategy game where players compete over a 24-hour period to finish with the most Points while staying alive.</p>
+              <p>Every hour, players choose one opponent to attack. If enough players attack the same target, that player takes damage. If their Health reaches zero, they're eliminated from the game. Survive longer, make smart attacks, and you'll climb the leaderboard.</p>
+              <p>Points come from successful attacks and surviving each round, and can also be spent on items that help you fight or stay alive. The player with the most points becomes the Bounty, making them a more valuable — and more dangerous — target.</p>
+              <p>The game resets every day at 12:00 PM EST, so each round is a fresh chance to claim Victory.</p>
+              <p>Pick your class, choose your targets carefully, survive the chaos, and try to end the day on top.</p>
             </div>
             <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
           </div>
