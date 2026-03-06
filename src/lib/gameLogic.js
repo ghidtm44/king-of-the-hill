@@ -19,19 +19,27 @@ export const MAX_HEALTH = 50
 export const MAX_PLAYERS = 10
 export const MAX_NAME_LENGTH = 10
 
-// EST timezone helpers
+// EST timezone helpers - Rounds run every 5 minutes (for faster testing)
+const ROUND_MINUTES = 5
+
 export function getCurrentHourIndex() {
   const now = new Date()
   const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
   const hours = est.getHours()
   const minutes = est.getMinutes()
   const seconds = est.getSeconds()
-  
-  // Game runs 12pm to 11am next day (23 hours)
-  let hourIndex = hours - 12
-  if (hourIndex < 0) hourIndex += 24
-  
-  return { hourIndex, minutes, seconds, isEvaluationSecond: minutes === 59 && seconds === 59 }
+
+  // Game runs 12pm to 11am next day
+  let hourFromStart = hours - 12
+  if (hourFromStart < 0) hourFromStart += 24
+
+  // Round index: one per 5-minute block (0 at 12:00, 1 at 12:05, etc.)
+  const roundIndex = hourFromStart * (60 / ROUND_MINUTES) + Math.floor(minutes / ROUND_MINUTES)
+
+  // Evaluate at last second of each 5-min block (e.g. 12:04:59, 12:09:59)
+  const isEvaluationSecond = minutes % ROUND_MINUTES === ROUND_MINUTES - 1 && seconds === 59
+
+  return { hourIndex: roundIndex, minutes, seconds, isEvaluationSecond }
 }
 
 export function isGameActive() {
@@ -39,19 +47,27 @@ export function isGameActive() {
   const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
   const hours = est.getHours()
   const minutes = est.getMinutes()
-  
-  // 12pm = hour 12, 11am = hour 11
-  if (hours === 11 && minutes >= 0) return false // Game ended at 11am
-  if (hours < 12) return false // Before noon
+
+  if (hours === 11 && minutes >= 0) return false
+  if (hours < 12) return false
   return true
 }
 
 export function getTimeUntilNextHour() {
   const now = new Date()
   const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const secondsLeft = 59 - est.getSeconds()
-  const minutesLeft = 59 - est.getMinutes()
-  return { minutes: minutesLeft, seconds: secondsLeft }
+  const minutes = est.getMinutes()
+  const seconds = est.getSeconds()
+
+  // Seconds into current 5-min block
+  const secondsIntoBlock = (minutes % ROUND_MINUTES) * 60 + seconds
+  // Seconds until evaluation (last second of block)
+  const secondsUntilEval = (ROUND_MINUTES - 1) * 60 + 59 - secondsIntoBlock
+
+  return {
+    minutes: Math.floor(secondsUntilEval / 60),
+    seconds: secondsUntilEval % 60,
+  }
 }
 
 export function generateSessionId() {

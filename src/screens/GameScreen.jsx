@@ -243,7 +243,7 @@ export default function GameScreen() {
       <div className="game-header">
         <button className="back-btn" onClick={() => navigate('/')}>← EXIT</button>
         <div className="timer">
-          Next round: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+          Next eval: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
         </div>
         <div className="my-stats">
           <PixelKnight color={me.color} size="small" />
@@ -291,7 +291,7 @@ export default function GameScreen() {
           </section>
 
           <section className="pending-attacks-section">
-            <h3>PENDING ATTACKS (this hour)</h3>
+            <h3>PENDING ATTACKS (this round)</h3>
             {totalAllocated === 0 ? (
               <p className="no-pending">No attacks selected. You'll attack randomly if you don't choose.</p>
             ) : (
@@ -364,11 +364,11 @@ export default function GameScreen() {
         <h3>HOURLY RECAP — Who attacked who</h3>
         <div className="log-content">
           {roundResults.length === 0 ? (
-            <p>No rounds yet. Results appear here after each hour.</p>
+            <p>No rounds yet. Results appear here every 5 min.</p>
           ) : (
             roundResults.map((r) => (
               <div key={r.id} className="round-block">
-                <div className="round-header">Hour {r.hour_index}</div>
+                <div className="round-header">Round {r.hour_index}</div>
                 <pre className="round-detail">{r.result_text}</pre>
               </div>
             ))

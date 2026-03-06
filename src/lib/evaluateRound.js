@@ -97,7 +97,7 @@ export async function evaluateRound(roomId, hourIndex) {
 
   // Save round result text
   const resultText = [
-    `--- Hour ${hourIndex} ---`,
+    `--- Round ${hourIndex} ---`,
     ...attackLog,
     ...roundLog,
   ].join('\n')
