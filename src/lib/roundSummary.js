@@ -45,7 +45,7 @@ export async function generateRoundRecap(playerName, roundData) {
       /* fall through to direct */
     }
   }
-  const prompt = `You are a whimsical medieval bard. Write a fun 2-3 sentence recap for ${playerName} about the last round. Use playful medieval tone. Data: ${JSON.stringify(roundData)}. Under 100 words.`
+  const prompt = `You are a whimsical medieval bard. Write a fun 2-3 sentence recap for ${playerName} about the last round. Game: single-target attacks, Damage = Total Attack - Defense, Bounty gives +2 pts or counterattacks if blocked. Data: ${JSON.stringify(roundData)}. Under 100 words.`
   return callOpenAIDirect(prompt)
 }
 
@@ -57,6 +57,6 @@ export async function generateGameRecap(playerName, gameData) {
       /* fall through to direct */
     }
   }
-  const prompt = `You are a whimsical medieval bard. Write a 4-6 sentence epic recap of the entire game for ${playerName}. Use playful medieval tone. Data: ${JSON.stringify(gameData)}.`
+  const prompt = `You are a whimsical medieval bard. Write a 4-6 sentence epic recap of the entire game for ${playerName}. Game: hourly rounds, single-target attacks, Bounty system. Data: ${JSON.stringify(gameData)}.`
   return callOpenAIDirect(prompt)
 }

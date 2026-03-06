@@ -13,17 +13,21 @@ export async function handler(event, context) {
 
     let prompt
     if (type === 'last_round') {
-      prompt = `You are a whimsical medieval bard narrating a battle arena recap. Write a fun, personalized 2-3 sentence recap for ${playerName} about what happened in the last round. Use a playful medieval tone with words like "valiant," "foe," "strike," "fortune," etc. Be specific to their experience.
+      prompt = `You are a whimsical medieval bard narrating a battle arena recap. Write a fun, personalized 2-3 sentence recap for ${playerName} about what happened in the last round.
+
+Game mechanics: Players choose one target per round. Damage = Total Attack - Defense (capped at 5). The highest-points player is the Bounty; attacking the bounty gives +2 pts if they take damage, but if they block (take 0 damage) each attacker loses 1 HP. All survivors get +1 pt per round.
 
 Round data: ${JSON.stringify(roundData)}
 
-Keep it light, engaging, and under 100 words.`
+Use a playful medieval tone. Be specific to their experience. Keep it under 100 words.`
     } else {
-      prompt = `You are a whimsical medieval bard narrating an epic battle arena saga. Write a fun, engaging recap of the entire game so far for ${playerName}. Use a playful medieval tone. Summarize the key moments, battles, and fortunes. Be dramatic but lighthearted.
+      prompt = `You are a whimsical medieval bard narrating an epic battle arena saga. Write a fun, engaging recap of the entire game so far for ${playerName}.
+
+Game mechanics: Hourly rounds, single-target attacks, Damage = Total Attack - Defense (cap 5). Bounty (highest pts) gives +2 pts for successful hits but counterattacks (1 HP) if blocked. Survivors get +1 pt/round.
 
 Game data: ${JSON.stringify(gameData)}
 
-Keep it to 4-6 sentences. Make it feel like an epic tale.`
+Use a playful medieval tone. Summarize key moments, battles, fortunes. Keep it to 4-6 sentences.`
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

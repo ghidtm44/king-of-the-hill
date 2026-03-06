@@ -1,8 +1,8 @@
 // Game constants
 export const CLASSES = {
-  attacker: { attack: 7, defense: 3, label: 'Attacker' },
-  defender: { attack: 3, defense: 7, label: 'Defender' },
-  balanced: { attack: 5, defense: 5, label: 'Balanced' },
+  attacker: { attack: 3, defense: 1, label: 'Attacker' },
+  defender: { attack: 1, defense: 3, label: 'Defender' },
+  balanced: { attack: 2, defense: 2, label: 'Balanced' },
 }
 
 export const COLORS = [
@@ -15,7 +15,8 @@ export const COLORS = [
 ]
 
 export const STARTING_POINTS = 5
-export const MAX_HEALTH = 20
+export const MAX_HEALTH = 15
+export const DAMAGE_CAP_PER_ROUND = 5
 export const MAX_PLAYERS = 10
 export const MAX_NAME_LENGTH = 10
 

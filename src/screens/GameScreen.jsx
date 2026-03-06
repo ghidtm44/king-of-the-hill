@@ -18,7 +18,7 @@ export default function GameScreen() {
   const [players, setPlayers] = useState([])
   const [items, setItems] = useState([])
   const [roundResults, setRoundResults] = useState([])
-  const [attackAllocations, setAttackAllocations] = useState({})
+  const [selectedTargetId, setSelectedTargetId] = useState(null)
   const [timeLeft, setTimeLeft] = useState({ minutes: 59, seconds: 59 })
   const [hourIndex, setHourIndex] = useState(0)
   const [purchaseError, setPurchaseError] = useState('')
@@ -69,12 +69,9 @@ export default function GameScreen() {
       .eq('attacker_session_id', sessionId)
       .eq('hour_index', hi)
 
-    const alloc = {}
-    ;(myAttacks || []).forEach((a) => {
-      alloc[a.target_session_id] = (alloc[a.target_session_id] || 0) + a.attack_points_used
-    })
+    const myTarget = (myAttacks || [])[0]?.target_session_id || null
     if (!hasUnsavedAttackChanges.current) {
-      setAttackAllocations(alloc)
+      setSelectedTargetId(myTarget)
     }
 
     const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
@@ -134,8 +131,8 @@ export default function GameScreen() {
           const roundData = {
             round: lastRound.hour_index,
             roundLog: lastRound.result_text,
-            attacksMade: (myAttacks || []).map((a) => ({ target: getName(a.target_session_id), pts: a.attack_points_used })),
-            attacksReceived: (attacksOnMe || []).map((a) => ({ attacker: getName(a.attacker_session_id), pts: a.attack_points_used })),
+            attacksMade: (myAttacks || []).map((a) => ({ target: getName(a.target_session_id), attack: a.attack_points_used })),
+            attacksReceived: (attacksOnMe || []).map((a) => ({ attacker: getName(a.attacker_session_id), attack: a.attack_points_used })),
           }
           const recap = await generateRoundRecap(me.name, roundData)
           setRecapText(recap)
@@ -171,8 +168,8 @@ export default function GameScreen() {
       const roundData = {
         round: lastRound.hour_index,
         roundLog: lastRound.result_text,
-        attacksMade: (myAttacks || []).map((a) => ({ target: getName(a.target_session_id), pts: a.attack_points_used })),
-        attacksReceived: (attacksOnMe || []).map((a) => ({ attacker: getName(a.attacker_session_id), pts: a.attack_points_used })),
+        attacksMade: (myAttacks || []).map((a) => ({ target: getName(a.target_session_id), attack: a.attack_points_used })),
+        attacksReceived: (attacksOnMe || []).map((a) => ({ attacker: getName(a.attacker_session_id), attack: a.attack_points_used })),
       }
       const recap = await generateRoundRecap(me.name, roundData)
       setRecapText(recap)
@@ -209,8 +206,8 @@ export default function GameScreen() {
       const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
       const gameData = {
         rounds: (allResults || []).map((r) => ({ round: r.hour_index, log: r.result_text })),
-        myAttacks: (myAttacks || []).map((a) => ({ round: a.hour_index, target: getName(a.target_session_id), pts: a.attack_points_used })),
-        attacksReceived: (attacksOnMe || []).map((a) => ({ round: a.hour_index, attacker: getName(a.attacker_session_id), pts: a.attack_points_used })),
+        myAttacks: (myAttacks || []).map((a) => ({ round: a.hour_index, target: getName(a.target_session_id), attack: a.attack_points_used })),
+        attacksReceived: (attacksOnMe || []).map((a) => ({ round: a.hour_index, attacker: getName(a.attacker_session_id), attack: a.attack_points_used })),
         currentScore: me.total_points,
         currentHP: me.health_points,
       }
@@ -280,30 +277,26 @@ export default function GameScreen() {
 
     const myItem = items.find((i) => i.id === me.current_item_id)
     const effAttack = me.attack_points + (myItem?.attack_bonus || 0)
-    let alloc = { ...attackAllocations }
-    const totalUsed = Object.values(alloc).reduce((a, b) => a + b, 0)
-
     const others = players.filter((p) => !p.is_eliminated && p.session_id !== sessionId)
-    if (totalUsed === 0 && others.length > 0) {
-      const randomTarget = others[Math.floor(Math.random() * others.length)]
-      alloc = { [randomTarget.session_id]: effAttack }
-    } else if (totalUsed > effAttack) return
+
+    // If no target selected, system will assign random at eval time - we can submit empty
+    const targetSessionId = selectedTargetId && others.some((p) => p.session_id === selectedTargetId)
+      ? selectedTargetId
+      : null
 
     await supabase.from('attack_allocations').delete().eq('room_id', roomId).eq('attacker_session_id', sessionId).eq('hour_index', hourIndex)
 
-    for (const [targetId, points] of Object.entries(alloc)) {
-      if (points > 0) {
-        await supabase.from('attack_allocations').insert({
-          room_id: roomId,
-          attacker_session_id: sessionId,
-          target_session_id: targetId,
-          attack_points_used: points,
-          hour_index: hourIndex,
-        })
-      }
+    if (targetSessionId) {
+      await supabase.from('attack_allocations').insert({
+        room_id: roomId,
+        attacker_session_id: sessionId,
+        target_session_id: targetSessionId,
+        attack_points_used: effAttack,
+        hour_index: hourIndex,
+      })
     }
     hasUnsavedAttackChanges.current = false
-    setAttackAllocations(alloc)
+    setSelectedTargetId(targetSessionId)
     loadData()
   }
 
@@ -343,26 +336,9 @@ export default function GameScreen() {
     else loadData()
   }
 
-  function addAttackPoint(targetSessionId) {
+  function selectTarget(targetSessionId) {
     hasUnsavedAttackChanges.current = true
-    const currentTotal = Object.values(attackAllocations).reduce((a, b) => a + b, 0)
-    if (currentTotal < effectiveAttack) {
-      setAttackAllocations((prev) => ({
-        ...prev,
-        [targetSessionId]: (prev[targetSessionId] || 0) + 1,
-      }))
-    }
-  }
-
-  function removeAttackPoint(targetSessionId) {
-    hasUnsavedAttackChanges.current = true
-    const current = attackAllocations[targetSessionId] || 0
-    if (current > 0) {
-      setAttackAllocations((prev) => ({
-        ...prev,
-        [targetSessionId]: current - 1,
-      }))
-    }
+    setSelectedTargetId((prev) => (prev === targetSessionId ? null : targetSessionId))
   }
 
   if (loading) return <div className="loading">Loading...</div>
@@ -394,9 +370,9 @@ export default function GameScreen() {
           ) : (
             <ul>
               {attacksAgainstMe.map((a) => (
-                <li key={a.id}>
-                  <strong>{attackerNames(a.attacker_session_id)}</strong> hit you for <strong>{a.attack_points_used}</strong> attack points
-                </li>
+              <li key={a.id}>
+                <strong>{attackerNames(a.attacker_session_id)}</strong> attacked you (Attack {a.attack_points_used})
+              </li>
               ))}
             </ul>
           )}
@@ -415,8 +391,11 @@ export default function GameScreen() {
   const myItem = items.find((i) => i.id === me.current_item_id)
   const effectiveAttack = me.attack_points + (myItem?.attack_bonus || 0)
   const effectiveDefense = me.defense_points + (myItem?.defense_bonus || 0)
-  const totalAllocated = Object.values(attackAllocations).reduce((a, b) => a + b, 0)
   const otherPlayers = players.filter((p) => !p.is_eliminated && p.session_id !== sessionId)
+  const survivors = players.filter((p) => !p.is_eliminated)
+  const bountySessionId = survivors.length
+    ? [...survivors].sort((a, b) => b.total_points - a.total_points)[0].session_id
+    : null
 
   return (
     <div className="game-screen">
@@ -445,33 +424,37 @@ export default function GameScreen() {
       <div className="game-layout">
         <aside className="player-list">
           <h3>RANKINGS</h3>
-          {players.map((p, i) => (
-            <div
-              key={p.id}
-              role="button"
-              tabIndex={0}
-              className={`player-row ${p.is_eliminated ? 'eliminated' : ''} ${p.session_id === sessionId ? 'me' : ''} ${selectedPlayer?.id === p.id ? 'selected' : ''}`}
-              onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
-            >
-              <span className="rank">#{i + 1}</span>
-              <PixelKnight color={p.color} size="small" />
-              <div className="player-info">
-                <span className="name">{p.name}</span>
-                <span className="stats">
-                  {p.attack_points + (items.find((i) => i.id === p.current_item_id)?.attack_bonus || 0)}A / 
-                  {p.defense_points + (items.find((i) => i.id === p.current_item_id)?.defense_bonus || 0)}D
-                </span>
-                <span className="points">{p.total_points} pts</span>
-                <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} />
-                {p.last_round_item_id && (
-                  <span className="last-item" title={items.find((i) => i.id === p.last_round_item_id)?.name || 'Item'}>
-                    ⚔
-                  </span>
-                )}
+          {players.map((p, i) => {
+            const pItem = items.find((it) => it.id === p.current_item_id)
+            const pDefense = p.defense_points + (pItem?.defense_bonus || 0)
+            const isBounty = p.session_id === bountySessionId
+            return (
+              <div
+                key={p.id}
+                role="button"
+                tabIndex={0}
+                className={`player-row ${p.is_eliminated ? 'eliminated' : ''} ${p.session_id === sessionId ? 'me' : ''} ${selectedPlayer?.id === p.id ? 'selected' : ''} ${isBounty ? 'bounty' : ''}`}
+                onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
+              >
+                <span className="rank">#{i + 1}</span>
+                {isBounty && <span className="bounty-badge" title="Bounty Target">🎯</span>}
+                <PixelKnight color={p.color} size="small" />
+                <div className="player-info">
+                  <span className="name">{p.name}</span>
+                  <span className="class-label">{p.class_type}</span>
+                  <span className="points">{p.total_points} pts</span>
+                  <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} />
+                  <span className="defense">Def: {pDefense}</span>
+                  {p.last_round_item_id && (
+                    <span className="last-item" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
+                      ⚔
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </aside>
 
         <main className="game-main">
@@ -503,65 +486,53 @@ export default function GameScreen() {
           </section>
 
           <section className="pending-attacks-section">
-            <h3>PENDING ATTACKS (this round)</h3>
-            {totalAllocated === 0 ? (
-              <p className="no-pending">No attacks selected. You'll attack randomly if you don't choose.</p>
+            <h3>PENDING ATTACK (this round)</h3>
+            {!selectedTargetId ? (
+              <p className="no-pending">No target selected. You'll attack randomly if you don't choose.</p>
             ) : (
-              <ul className="pending-list">
-                {Object.entries(attackAllocations)
-                  .filter(([, pts]) => pts > 0)
-                  .map(([targetSid, pts]) => {
-                    const target = players.find((p) => p.session_id === targetSid)
-                    return target ? (
-                      <li key={targetSid}>
-                        <PixelKnight color={target.color} size="small" />
-                        <strong>{target.name}</strong>: {pts} attack pts
-                      </li>
-                    ) : null
-                  })}
-              </ul>
+              <div className="pending-list">
+                {(() => {
+                  const target = players.find((p) => p.session_id === selectedTargetId)
+                  return target ? (
+                    <div className="pending-target">
+                      <PixelKnight color={target.color} size="small" />
+                      <strong>{target.name}</strong> (Attack {effectiveAttack})
+                    </div>
+                  ) : null
+                })()}
+              </div>
             )}
           </section>
 
           <section className="attack-section">
-            <h3>ATTACK ({totalAllocated}/{effectiveAttack})</h3>
-            <p className="attack-hint">Tap +/− to allocate. Change anytime before confirming.</p>
+            <h3>CHOOSE TARGET</h3>
+            <p className="attack-hint">Pick one player to attack. Change anytime before confirming.</p>
             {otherPlayers.length === 0 ? (
               <p>No other players</p>
             ) : (
               <div className="attack-targets">
                 {otherPlayers.map((p) => {
-                  const pts = attackAllocations[p.session_id] || 0
+                  const isSelected = selectedTargetId === p.session_id
+                  const isBounty = p.session_id === bountySessionId
                   return (
-                    <div key={p.id} className="attack-target">
-                      <button
-                        type="button"
-                        className="attack-btn minus"
-                        onClick={() => removeAttackPoint(p.session_id)}
-                        disabled={pts === 0 || me.is_eliminated}
-                        aria-label={`Remove from ${p.name}`}
-                      >
-                        −
-                      </button>
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`attack-target ${isSelected ? 'selected' : ''} ${isBounty ? 'bounty' : ''}`}
+                      onClick={() => selectTarget(p.session_id)}
+                      disabled={me.is_eliminated}
+                      aria-label={`Attack ${p.name}`}
+                    >
+                      {isBounty && <span className="bounty-badge">🎯</span>}
                       <PixelKnight color={p.color} size="small" />
                       <span className="target-name">{p.name}</span>
-                      <span className="target-pts">{pts}</span>
-                      <button
-                        type="button"
-                        className="attack-btn plus"
-                        onClick={() => addAttackPoint(p.session_id)}
-                        disabled={totalAllocated >= effectiveAttack || me.is_eliminated}
-                        aria-label={`Add to ${p.name}`}
-                      >
-                        +
-                      </button>
-                    </div>
+                    </button>
                   )
                 })}
               </div>
             )}
             <button className="submit-attacks" onClick={submitAttacks} disabled={me.is_eliminated}>
-              CONFIRM ATTACKS
+              CONFIRM ATTACK
             </button>
           </section>
 
@@ -660,12 +631,12 @@ export default function GameScreen() {
                           <div className="history-round-header">Round {round}</div>
                           {made.length > 0 && (
                             <div className="history-detail">
-                              Attacked: {made.map((a) => `${getName(a.target_session_id)} (${a.attack_points_used})`).join(', ')}
+                              Attacked: {made.map((a) => `${getName(a.target_session_id)} (Atk ${a.attack_points_used})`).join(', ')}
                             </div>
                           )}
                           {received.length > 0 && (
                             <div className="history-detail received">
-                              Received: {received.map((a) => `${getName(a.attacker_session_id)} (${a.attack_points_used})`).join(', ')} = {received.reduce((s, a) => s + a.attack_points_used, 0)} total
+                              Received: {received.map((a) => `${getName(a.attacker_session_id)} (Atk ${a.attack_points_used})`).join(', ')} = {received.reduce((s, a) => s + a.attack_points_used, 0)} total atk
                             </div>
                           )}
                           {made.length === 0 && received.length === 0 && (

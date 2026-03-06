@@ -1,6 +1,5 @@
 import { supabase } from './supabase'
-
-const DAMAGE_CAP_PER_ROUND = 8
+import { DAMAGE_CAP_PER_ROUND } from './gameLogic'
 
 export async function evaluateRound(roomId, hourIndex) {
   const { error: insertErr } = await supabase
@@ -14,19 +13,26 @@ export async function evaluateRound(roomId, hourIndex) {
     return { error: insertErr.message }
   }
 
-  const { data: players, error: playersErr } = await supabase
+  // Load ALL players (including eliminated) for leaderboard, but survivors for combat
+  const { data: allPlayers, error: playersErr } = await supabase
     .from('players')
     .select('id, session_id, name, attack_points, defense_points, total_points, health_points, current_item_id, is_eliminated')
     .eq('room_id', roomId)
-    .eq('is_eliminated', false)
 
-  if (playersErr || !players?.length) {
+  if (playersErr || !allPlayers?.length) {
     return { error: 'No players' }
   }
 
+  const survivors = allPlayers.filter((p) => !p.is_eliminated)
   const { data: itemsData } = await supabase.from('items').select('id, attack_bonus, defense_bonus, damage_reduction')
   const itemsMap = Object.fromEntries((itemsData || []).map((i) => [i.id, i]))
 
+  // Bounty = highest points among survivors at round start
+  const bountySessionId = survivors.length
+    ? survivors.sort((a, b) => b.total_points - a.total_points)[0].session_id
+    : null
+
+  // Load existing attack allocations
   const { data: attacks, error: attacksErr } = await supabase
     .from('attack_allocations')
     .select('*')
@@ -35,99 +41,152 @@ export async function evaluateRound(roomId, hourIndex) {
 
   if (attacksErr) return { error: attacksErr.message }
 
-  const playerMap = {}
-  players.forEach((p) => {
+  // Build effective stats for each survivor
+  const survivorMap = {}
+  survivors.forEach((p) => {
     const item = p.current_item_id ? itemsMap[p.current_item_id] : null
-    const defenseBonus = item?.defense_bonus || 0
-    const damageReduction = item?.damage_reduction || 0
-    playerMap[p.session_id] = {
+    survivorMap[p.session_id] = {
       ...p,
-      effectiveDefense: p.defense_points + defenseBonus,
-      damageReduction,
-      totalAttackAgainst: 0,
+      effectiveAttack: p.attack_points + (item?.attack_bonus || 0),
+      effectiveDefense: p.defense_points + (item?.defense_bonus || 0),
+      damageReduction: item?.damage_reduction || 0,
     }
   })
 
-  attacks?.forEach((a) => {
-    if (playerMap[a.target_session_id]) {
-      playerMap[a.target_session_id].totalAttackAgainst += a.attack_points_used
-    }
+  // Assign random targets for survivors who didn't choose
+  const existingAttackers = new Set((attacks || []).map((a) => a.attacker_session_id))
+  const othersBySession = {}
+  survivors.forEach((p) => {
+    othersBySession[p.session_id] = survivors.filter((s) => s.session_id !== p.session_id)
+  })
+
+  const attacksToProcess = [...(attacks || [])]
+  for (const p of survivors) {
+    if (existingAttackers.has(p.session_id)) continue
+    const others = othersBySession[p.session_id]
+    if (others.length === 0) continue
+    const randomTarget = others[Math.floor(Math.random() * others.length)]
+    const item = p.current_item_id ? itemsMap[p.current_item_id] : null
+    const attackValue = p.attack_points + (item?.attack_bonus || 0)
+    attacksToProcess.push({
+      attacker_session_id: p.session_id,
+      target_session_id: randomTarget.session_id,
+      attack_points_used: attackValue,
+    })
+  }
+
+  // Group attacks by target
+  const targetToAttackers = {}
+  attacksToProcess.forEach((a) => {
+    if (!survivorMap[a.attacker_session_id]) return // skip eliminated attackers
+    if (!targetToAttackers[a.target_session_id]) targetToAttackers[a.target_session_id] = []
+    targetToAttackers[a.target_session_id].push({
+      sessionId: a.attacker_session_id,
+      attackValue: a.attack_points_used,
+    })
   })
 
   const roundLog = []
   const scoreGains = {}
   const damageTaken = {}
-  players.forEach((p) => { scoreGains[p.session_id] = 0; damageTaken[p.session_id] = 0 })
+  const bountyCounterattackVictims = [] // attackers who hit bounty but did 0 damage
 
-  for (const sessionId of Object.keys(playerMap)) {
-    const p = playerMap[sessionId]
-    const incoming = p.totalAttackAgainst
-    const defense = p.effectiveDefense
-    let damage = Math.max(0, incoming - defense)
+  survivors.forEach((p) => {
+    scoreGains[p.session_id] = 0
+    damageTaken[p.session_id] = 0
+  })
 
-    if (damage > 0 && p.damageReduction > 0) {
-      damage = Math.max(0, damage - p.damageReduction)
+  // Process each target
+  for (const [targetSessionId, attackerList] of Object.entries(targetToAttackers)) {
+    const target = survivorMap[targetSessionId]
+    if (!target) continue
+
+    const totalAttack = attackerList.reduce((s, a) => s + a.attackValue, 0)
+    let damage = Math.max(0, totalAttack - target.effectiveDefense)
+    if (damage > 0 && target.damageReduction > 0) {
+      damage = Math.max(0, damage - target.damageReduction)
     }
     damage = Math.min(damage, DAMAGE_CAP_PER_ROUND)
-    damageTaken[sessionId] = damage
+    damageTaken[targetSessionId] = damage
+
+    const isBounty = targetSessionId === bountySessionId
 
     if (damage > 0) {
-      roundLog.push(`${p.name} took ${damage} dmg (${incoming} atk vs ${defense} def)`)
-      const targetAttacks = attacks?.filter((a) => a.target_session_id === sessionId) || []
-      const totalContrib = targetAttacks.reduce((s, a) => s + a.attack_points_used, 0)
-      if (totalContrib > 0) {
-        const shares = targetAttacks.map((a) => ({
-          sid: a.attacker_session_id,
-          exact: (a.attack_points_used / totalContrib) * damage,
-        }))
-        const floored = shares.map((s) => Math.floor(s.exact))
-        let remainder = damage - floored.reduce((a, b) => a + b, 0)
-        const withFrac = shares
-          .map((s, i) => ({ ...s, floor: floored[i], frac: s.exact - floored[i] }))
-          .sort((a, b) => b.frac - a.frac)
-        for (let i = 0; i < remainder; i++) {
-          withFrac[i].floor += 1
-        }
-        withFrac.forEach((s) => {
-          scoreGains[s.sid] = (scoreGains[s.sid] || 0) + s.floor
-        })
+      roundLog.push(`${target.name} loses ${damage} HP (Total Attack: ${totalAttack}, Defense: ${target.effectiveDefense})`)
+      const rewardPerAttacker = isBounty ? 2 : 1
+      attackerList.forEach((a) => {
+        scoreGains[a.sessionId] = (scoreGains[a.sessionId] || 0) + rewardPerAttacker
+      })
+      if (isBounty) {
+        roundLog.push(`Attackers gain +${rewardPerAttacker} Points (bounty reward)`)
       }
-    } else if (incoming > 0) {
-      roundLog.push(`${p.name} blocked (${incoming} atk vs ${defense} def)`)
+    } else if (totalAttack > 0) {
+      roundLog.push(`${target.name} blocked (Total Attack: ${totalAttack}, Defense: ${target.effectiveDefense})`)
+      if (isBounty) {
+        attackerList.forEach((a) => bountyCounterattackVictims.push(a.sessionId))
+      }
     }
   }
 
-  const updates = []
-  for (const sessionId of Object.keys(playerMap)) {
-    const p = playerMap[sessionId]
-    const damage = damageTaken[sessionId]
-    const newHealth = Math.max(0, p.health_points - damage)
-    const hourlyIncome = 1
-    const damageScore = scoreGains[sessionId] || 0
-    const newPoints = p.total_points + hourlyIncome + damageScore
-    const isEliminated = newPoints <= 0 || newHealth <= 0
+  // Bounty counterattack: attackers who hit bounty but did 0 damage lose 1 HP (min 1)
+  const counterattackDamage = {}
+  bountyCounterattackVictims.forEach((sid) => {
+    counterattackDamage[sid] = (counterattackDamage[sid] || 0) + 1
+  })
 
-    updates.push({
-      id: p.id,
-      total_points: Math.max(0, newPoints),
-      health_points: newHealth,
-      is_eliminated: isEliminated,
-      last_round_item_id: p.current_item_id,
+  // Build attack log lines
+  const attackLogLines = []
+  for (const [targetSessionId, attackerList] of Object.entries(targetToAttackers)) {
+    const target = allPlayers.find((p) => p.session_id === targetSessionId)
+    const targetName = target?.name || '?'
+    attackerList.forEach((a) => {
+      const attacker = allPlayers.find((p) => p.session_id === a.sessionId)
+      attackLogLines.push(`${attacker?.name || '?'} attacked ${targetName}`)
     })
   }
 
-  const attackLog = attacks?.map((a) => {
-    const attacker = players.find((x) => x.session_id === a.attacker_session_id)
-    const target = players.find((x) => x.session_id === a.target_session_id)
-    return `${attacker?.name || '?'} → ${target?.name || '?'}: ${a.attack_points_used} atk`
-  }) || []
+  const counterattackLog = []
+  Object.keys(counterattackDamage).forEach((sid) => {
+    const p = survivorMap[sid]
+    if (p) counterattackLog.push(`${p.name} loses 1 HP (bounty counterattack)`)
+  })
 
-  const incomeLog = players.map((p) => `${p.name} +1 (income)`).join('\n')
+  // Survival income: +1 for all survivors
+  survivors.forEach((p) => {
+    scoreGains[p.session_id] = (scoreGains[p.session_id] || 0) + 1
+  })
+
+  // Build result text (spec format)
+  const resultBlocks = []
+  for (const [targetSessionId, attackerList] of Object.entries(targetToAttackers)) {
+    const target = survivorMap[targetSessionId]
+    if (!target) continue
+    const totalAttack = attackerList.reduce((s, a) => s + a.attackValue, 0)
+    let dmg = Math.max(0, totalAttack - target.effectiveDefense)
+    if (dmg > 0 && target.damageReduction > 0) dmg = Math.max(0, dmg - target.damageReduction)
+    dmg = Math.min(dmg, DAMAGE_CAP_PER_ROUND)
+    const isBounty = targetSessionId === bountySessionId
+
+    resultBlocks.push(`Total Attack: ${totalAttack}`)
+    resultBlocks.push(`${target.name} Defense: ${target.effectiveDefense}`)
+    resultBlocks.push(`Damage: ${dmg}`)
+    if (dmg > 0) {
+      resultBlocks.push(`${target.name} loses ${dmg} HP`)
+      resultBlocks.push(`Attackers gain +${isBounty ? 2 : 1} Points${isBounty ? ' (bounty reward)' : ''}`)
+    } else if (totalAttack > 0 && isBounty) {
+      resultBlocks.push('Bounty counterattack: attackers lose 1 HP each')
+    }
+    resultBlocks.push('')
+  }
+
   const resultText = [
     `--- Round ${hourIndex} ---`,
-    ...attackLog,
-    ...roundLog,
-    incomeLog,
+    ...attackLogLines,
+    '',
+    ...resultBlocks,
+    ...counterattackLog,
+    '',
+    'All surviving players gain +1 Point',
   ].join('\n')
 
   await supabase.from('round_results').insert({
@@ -135,6 +194,40 @@ export async function evaluateRound(roomId, hourIndex) {
     hour_index: hourIndex,
     result_text: resultText,
   })
+
+  // Persist random allocations so they're visible
+  const existingAttackerIds = new Set((attacks || []).map((x) => x.attacker_session_id))
+  for (const a of attacksToProcess) {
+    if (existingAttackerIds.has(a.attacker_session_id)) continue
+    await supabase.from('attack_allocations').insert({
+      room_id: roomId,
+      attacker_session_id: a.attacker_session_id,
+      target_session_id: a.target_session_id,
+      attack_points_used: a.attack_points_used,
+      hour_index: hourIndex,
+    })
+  }
+
+  // Apply updates to players
+  const updates = []
+  for (const p of allPlayers) {
+    const isSurvivor = !p.is_eliminated
+    const damage = damageTaken[p.session_id] || 0
+    const counterDmg = counterattackDamage[p.session_id] || 0
+    const totalDamage = damage + counterDmg
+    const newHealth = Math.max(0, p.health_points - totalDamage)
+    const scoreGain = isSurvivor ? (scoreGains[p.session_id] || 0) : 0
+    const newPoints = isSurvivor ? p.total_points + scoreGain : p.total_points
+    const isEliminated = newHealth <= 0
+
+    updates.push({
+      id: p.id,
+      total_points: newPoints,
+      health_points: newHealth,
+      is_eliminated: isEliminated,
+      last_round_item_id: p.current_item_id,
+    })
+  }
 
   for (const u of updates) {
     const { id, ...rest } = u

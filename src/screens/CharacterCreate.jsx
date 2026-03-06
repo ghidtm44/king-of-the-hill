@@ -91,7 +91,7 @@ export default function CharacterCreate() {
       attack_points: classStats.attack,
       defense_points: classStats.defense,
       total_points: 5,
-      health_points: 20,
+      health_points: 15,
       is_eliminated: false,
     })
 
