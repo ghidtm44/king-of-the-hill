@@ -200,11 +200,22 @@ export async function evaluateRound(roomId, hourIndex) {
     playerPointChanges[p.session_id] = delta
   })
 
+  // Store damage taken per player (combat + bounty counterattack) for elimination screen
+  const damageBySession = {}
+  allPlayers.forEach((p) => {
+    const dmg = damageTaken[p.session_id] || 0
+    const counterDmg = counterattackDamage[p.session_id] || 0
+    if (dmg > 0 || counterDmg > 0) {
+      damageBySession[p.session_id] = { combat: dmg, bountyCounterattack: counterDmg, total: dmg + counterDmg }
+    }
+  })
+
   await supabase.from('round_results').insert({
     room_id: roomId,
     hour_index: hourIndex,
     result_text: resultText,
     player_point_changes: playerPointChanges,
+    damage_by_session: Object.keys(damageBySession).length ? damageBySession : null,
   })
 
   // Current ranking (before this round) = end of previous round

@@ -578,6 +578,8 @@ export default function GameScreen() {
   if (me.is_eliminated) {
     const attackerNames = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
     const lastRoundResult = roundResults[0]
+    const myDamage = lastRoundResult?.damage_by_session?.[sessionId]
+    const totalAttackDisplay = attacksAgainstMe.reduce((s, a) => s + a.attack_points_used, 0)
     return (
       <div className="elimination-screen">
         <h1>💀 ELIMINATED 💀</h1>
@@ -596,6 +598,21 @@ export default function GameScreen() {
             </ul>
           )}
         </section>
+        {(myDamage || totalAttackDisplay > 0) && (
+          <section className="elim-damage">
+            <h3>DAMAGE YOU TOOK</h3>
+            {myDamage ? (
+              <p>
+                Combat: {myDamage.combat} HP
+                {myDamage.bountyCounterattack > 0 && ` • Bounty counterattack: ${myDamage.bountyCounterattack} HP`}
+                {' '}→ Total: <strong>{myDamage.total} HP</strong>
+              </p>
+            ) : (
+              <p>Total attack against you: {totalAttackDisplay} {ICON_ATK} (damage is capped at 5 per round)</p>
+            )}
+            <p className="elim-damage-note">Max combat damage per round is 5. Scavenge &quot;ambushed&quot; can also reduce HP.</p>
+          </section>
+        )}
         {lastRoundResult && (
           <section className="elim-recap">
             <h3>ROUND RECAP</h3>
