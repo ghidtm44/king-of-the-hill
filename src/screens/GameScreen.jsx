@@ -435,9 +435,11 @@ export default function GameScreen() {
                 onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
               >
-                <span className="rank">#{currentRank}</span>
-                <span className={`rank-change rank-change-${rankChange}`} title={rankChange === 'up' ? 'Moved up' : rankChange === 'down' ? 'Moved down' : 'No change'}>
-                  {rankChange === 'up' ? '▲' : rankChange === 'down' ? '▼' : '−'}
+                <span className="rank-cell">
+                  <span className="rank">#{currentRank}</span>
+                  <span className={`rank-change rank-change-${rankChange}`} title={rankChange === 'up' ? 'Moved up' : rankChange === 'down' ? 'Moved down' : 'No change'}>
+                    {rankChange === 'up' ? '\u2191' : rankChange === 'down' ? '\u2193' : '\u2013'}
+                  </span>
                 </span>
                 {isBounty && (
                   <span className="bounty-label-wrap">
@@ -452,7 +454,7 @@ export default function GameScreen() {
                   <span className="name">{p.name}</span>
                   <span className="class-label">{p.class_type}</span>
                   <span className="points">{p.total_points} pts</span>
-                  <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} />
+                  <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
                   <span className="defense">Def: {pDefense}</span>
                   {p.last_round_item_id && (
                     <span className="last-item" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
