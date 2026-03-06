@@ -727,6 +727,12 @@ export default function GameScreen() {
                 onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
               >
+                {isTarget && (
+                  <div className="target-badge-strip" title="Your attack target">
+                    <span className="target-badge">{ICON_ATK} CURRENT TARGET</span>
+                  </div>
+                )}
+                <div className="player-row-body">
                 <span className="rank-cell">
                   <span className="rank">#{currentRank}</span>
                   <span className={`rank-change rank-change-${rankChange}`} title={rankChange === 'up' ? 'Moved up' : rankChange === 'down' ? 'Moved down' : 'No change'}>
@@ -750,11 +756,6 @@ export default function GameScreen() {
                 )}
                 <PixelKnight color={p.color} size="small" />
                 <div className="player-info">
-                  {isTarget && (
-                    <span className="target-label-wrap" title="Your attack target">
-                      <span className="target-badge">{ICON_ATK} CURRENT TARGET</span>
-                    </span>
-                  )}
                   <span className="name">{p.name}</span>
                   <span className="class-label player-detail-mobile">{p.class_type}</span>
                   <span className="points">{p.total_points} pts</span>
@@ -770,6 +771,7 @@ export default function GameScreen() {
                       ⚔
                     </span>
                   )}
+                </div>
                 </div>
               </div>
             )
