@@ -729,7 +729,10 @@ export default function GameScreen() {
               >
                 {isTarget && (
                   <div className="target-badge-strip" title="Your attack target">
-                    <span className="target-badge">{ICON_ATK} CURRENT TARGET</span>
+                    <span className="target-badge">
+                      <span className="target-badge-full">{ICON_ATK} CURRENT TARGET</span>
+                      <span className="target-badge-short">{ICON_ATK} TARGET</span>
+                    </span>
                   </div>
                 )}
                 <div className="player-row-body">

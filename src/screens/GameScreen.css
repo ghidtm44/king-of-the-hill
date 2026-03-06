@@ -413,6 +413,10 @@
   white-space: nowrap;
 }
 
+.target-badge-short {
+  display: none;
+}
+
 .player-row.eliminated {
   opacity: 0.5;
 }
@@ -1537,8 +1541,8 @@
 
   .player-list-scroll > .player-row {
     flex: 0 0 auto;
-    min-width: 72px;
-    max-width: 72px;
+    min-width: 88px;
+    max-width: 88px;
     flex-direction: column;
     padding: 0.4rem;
     margin-bottom: 0;
@@ -1554,6 +1558,14 @@
   .player-list-scroll > .player-row .target-badge-strip {
     padding: 0.1rem 0;
     margin-bottom: 0.1rem;
+  }
+
+  .player-list-scroll > .player-row .target-badge-full {
+    display: none;
+  }
+
+  .player-list-scroll > .player-row .target-badge-short {
+    display: inline;
   }
 
   .player-list-scroll > .player-row .rank-cell {
