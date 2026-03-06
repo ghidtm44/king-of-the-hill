@@ -306,9 +306,10 @@ export default function GameScreen() {
   }
 
   async function showFullGameRecap() {
-    if (!me || !roundResults.length) return
+    if (!me) return
     setRecapModal('full_game')
     setRecapData(null)
+    const currentHi = hourIndex ?? getCurrentHourIndex().hourIndex
     const { data: allAttacks } = await supabase
       .from('attack_allocations')
       .select('*')
@@ -318,9 +319,12 @@ export default function GameScreen() {
       if (!byRound[a.hour_index]) byRound[a.hour_index] = []
       byRound[a.hour_index].push(a)
     })
-    const rounds = roundResults
+    const previousRoundIndices = []
+    for (let hi = 1; hi < currentHi; hi++) previousRoundIndices.push(hi)
+    const rounds = previousRoundIndices
+      .reverse()
       .slice(0, 10)
-      .map((r) => ({ hourIndex: r.hour_index, attacks: byRound[r.hour_index] || [] }))
+      .map((hi) => ({ hourIndex: hi, attacks: byRound[hi] || [] }))
     setRecapData({ rounds })
   }
 
