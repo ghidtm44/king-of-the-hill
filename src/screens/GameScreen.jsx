@@ -267,6 +267,12 @@ export default function GameScreen() {
     }
     setPlayerRoundHistory(null)
     async function loadPlayerHistory() {
+      const { data: resultsData } = await supabase
+        .from('round_results')
+        .select('hour_index')
+        .eq('room_id', roomId)
+      const evaluatedRounds = new Set((resultsData || []).map((r) => r.hour_index))
+
       const { data: attacksMade } = await supabase
         .from('attack_allocations')
         .select('*')
@@ -279,7 +285,10 @@ export default function GameScreen() {
         .eq('room_id', roomId)
         .eq('target_session_id', selectedPlayer.session_id)
         .order('hour_index', { ascending: true })
-      setPlayerRoundHistory({ attacksMade: attacksMade || [], attacksReceived: attacksReceived || [] })
+
+      const made = (attacksMade || []).filter((a) => evaluatedRounds.has(a.hour_index))
+      const received = (attacksReceived || []).filter((a) => evaluatedRounds.has(a.hour_index))
+      setPlayerRoundHistory({ attacksMade: made, attacksReceived: received })
     }
     loadPlayerHistory()
   }, [selectedPlayer, roomId])
