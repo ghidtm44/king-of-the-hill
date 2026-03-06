@@ -59,6 +59,17 @@ export default function CharacterCreate() {
     }
     setRoom(data)
 
+    // Ensure items exist (needed when tables are cleared)
+    const { count: itemsCount } = await supabase.from('items').select('*', { count: 'exact', head: true })
+    if (!itemsCount || itemsCount === 0) {
+      await supabase.from('items').insert([
+        { name: 'Sword', description: '+1 Attack', cost: 4, attack_bonus: 1, defense_bonus: 0, damage_reduction: 0, hp_on_purchase: 0 },
+        { name: 'Shield', description: '+1 Defense', cost: 4, attack_bonus: 0, defense_bonus: 1, damage_reduction: 0, hp_on_purchase: 0 },
+        { name: 'Armor', description: 'Reduce incoming damage by 1', cost: 6, attack_bonus: 0, defense_bonus: 0, damage_reduction: 1, hp_on_purchase: 0 },
+        { name: 'Potion', description: 'Restore 5 HP immediately', cost: 5, attack_bonus: 0, defense_bonus: 0, damage_reduction: 0, hp_on_purchase: 5 },
+      ])
+    }
+
     const { count } = await supabase
       .from('players')
       .select('*', { count: 'exact', head: true })
@@ -86,6 +97,10 @@ export default function CharacterCreate() {
       setError('Room is full')
       return
     }
+    if (!room?.id) {
+      setError('Room not ready. Please wait...')
+      return
+    }
 
     let sessionId = localStorage.getItem('koth_session_id')
     if (!sessionId) {
@@ -94,30 +109,40 @@ export default function CharacterCreate() {
     }
 
     const classStats = CLASSES[selectedClass]
-    const { error: insertError } = await supabase.from('players').insert({
-      room_id: room.id,
-      session_id: sessionId,
-      name: trimmedName,
-      color: selectedColor.value,
-      class_type: selectedClass,
-      attack_points: classStats.attack,
-      defense_points: classStats.defense,
-      total_points: 5,
-      health_points: 15,
-      is_eliminated: false,
-    })
+    const { data: insertedPlayer, error: insertError } = await supabase
+      .from('players')
+      .insert({
+        room_id: room.id,
+        session_id: sessionId,
+        name: trimmedName,
+        color: selectedColor.value,
+        class_type: selectedClass,
+        attack_points: classStats.attack,
+        defense_points: classStats.defense,
+        total_points: 5,
+        health_points: 15,
+        is_eliminated: false,
+      })
+      .select('id')
+      .single()
 
     if (insertError) {
       if (insertError.code === '23505') {
         setError('You already joined! Go to game.')
         setTimeout(() => navigate('/game'), 1500)
       } else {
-        setError(insertError.message)
+        setError(insertError.message || 'Failed to create character')
       }
       return
     }
+    if (!insertedPlayer?.id) {
+      setError('Character created but could not verify. Try again.')
+      return
+    }
 
-    localStorage.setItem('koth_room_id', room.id)
+    // Set both before navigate - critical for GameScreen to find them
+    localStorage.setItem('koth_room_id', String(room.id))
+    localStorage.setItem('koth_session_id', sessionId)
     navigate('/game', { state: { showTutorial: true } })
   }
 

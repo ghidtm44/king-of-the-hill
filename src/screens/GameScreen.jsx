@@ -49,7 +49,10 @@ export default function GameScreen() {
   const gameEndCheckRanThisHourRef = useRef(false)
 
   const loadData = useCallback(async () => {
-    if (!roomId || !sessionId) {
+    // Read fresh from localStorage - closure values can be stale right after navigation
+    const rid = localStorage.getItem('koth_room_id')
+    const sid = localStorage.getItem('koth_session_id')
+    if (!rid || !sid) {
       navigate('/')
       return
     }
@@ -60,11 +63,11 @@ export default function GameScreen() {
     const { data: playersData } = await supabase
       .from('players')
       .select('*')
-      .eq('room_id', roomId)
+      .eq('room_id', rid)
       .order('total_points', { ascending: false })
 
     setPlayers(playersData || [])
-    setMe((playersData || []).find((p) => p.session_id === sessionId))
+    setMe((playersData || []).find((p) => p.session_id === sid))
 
     const { data: itemsData } = await supabase.from('items').select('*').order('cost')
     setItems(itemsData || [])
@@ -72,7 +75,7 @@ export default function GameScreen() {
     const { data: resultsData } = await supabase
       .from('round_results')
       .select('*')
-      .eq('room_id', roomId)
+      .eq('room_id', rid)
       .order('hour_index', { ascending: false })
       .limit(5)
 
@@ -81,7 +84,7 @@ export default function GameScreen() {
     const { data: allRoomAttacks } = await supabase
       .from('attack_allocations')
       .select('*')
-      .eq('room_id', roomId)
+      .eq('room_id', rid)
     const byHour = {}
     ;(allRoomAttacks || []).forEach((a) => {
       if (!byHour[a.hour_index]) byHour[a.hour_index] = []
@@ -94,16 +97,16 @@ export default function GameScreen() {
       const { data: attacksOnMeLast } = await supabase
         .from('attack_allocations')
         .select('attacker_session_id')
-        .eq('room_id', roomId)
-        .eq('target_session_id', sessionId)
+        .eq('room_id', rid)
+        .eq('target_session_id', sid)
         .eq('hour_index', lastRoundHour)
       setLastRoundAttackersOnMe(new Set((attacksOnMeLast || []).map((a) => a.attacker_session_id)))
 
       const { data: myLastAttack } = await supabase
         .from('attack_allocations')
         .select('target_session_id')
-        .eq('room_id', roomId)
-        .eq('attacker_session_id', sessionId)
+        .eq('room_id', rid)
+        .eq('attacker_session_id', sid)
         .eq('hour_index', lastRoundHour)
         .maybeSingle()
       const myLastTarget = myLastAttack?.target_session_id
@@ -111,11 +114,11 @@ export default function GameScreen() {
         const { data: sameTargetAttacks } = await supabase
           .from('attack_allocations')
           .select('attacker_session_id')
-          .eq('room_id', roomId)
+          .eq('room_id', rid)
           .eq('target_session_id', myLastTarget)
           .eq('hour_index', lastRoundHour)
         setLastRoundSameTargetAttackers(
-          new Set((sameTargetAttacks || []).map((a) => a.attacker_session_id).filter((sid) => sid !== sessionId))
+          new Set((sameTargetAttacks || []).map((a) => a.attacker_session_id).filter((s) => s !== sid))
         )
       } else {
         setLastRoundSameTargetAttackers(new Set())
@@ -128,15 +131,15 @@ export default function GameScreen() {
     const { data: myAttacks } = await supabase
       .from('attack_allocations')
       .select('*')
-      .eq('room_id', roomId)
-      .eq('attacker_session_id', sessionId)
+      .eq('room_id', rid)
+      .eq('attacker_session_id', sid)
       .eq('hour_index', hi)
 
-    const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
+    const mePlayer = (playersData || []).find((p) => p.session_id === sid)
     const canAttackThisRound = !mePlayer?.joined_at || canNewPlayerAttackInFirstRound(mePlayer.joined_at, hi)
 
     if (!canAttackThisRound) {
-      await supabase.from('attack_allocations').delete().eq('room_id', roomId).eq('attacker_session_id', sessionId).eq('hour_index', hi)
+      await supabase.from('attack_allocations').delete().eq('room_id', rid).eq('attacker_session_id', sid).eq('hour_index', hi)
     }
 
     const myTarget = canAttackThisRound ? ((myAttacks || [])[0]?.target_session_id || null) : null
@@ -145,8 +148,8 @@ export default function GameScreen() {
     const { data: scavengeData } = await supabase
       .from('scavenge_uses')
       .select('id, result')
-      .eq('room_id', roomId)
-      .eq('session_id', sessionId)
+      .eq('room_id', rid)
+      .eq('session_id', sid)
       .eq('hour_index', hi)
       .maybeSingle()
     setScavengeUsedThisRound(!!scavengeData)
@@ -163,8 +166,8 @@ export default function GameScreen() {
     const { data: stanceData } = await supabase
       .from('player_stances')
       .select('stance')
-      .eq('room_id', roomId)
-      .eq('session_id', sessionId)
+      .eq('room_id', rid)
+      .eq('session_id', sid)
       .eq('hour_index', hi)
       .maybeSingle()
     setCurrentStance(stanceData?.stance || null)
@@ -173,8 +176,8 @@ export default function GameScreen() {
       const { data: attacksOnMe } = await supabase
         .from('attack_allocations')
         .select('*')
-        .eq('room_id', roomId)
-        .eq('target_session_id', sessionId)
+        .eq('room_id', rid)
+        .eq('target_session_id', sid)
         .order('hour_index', { ascending: false })
         .limit(20)
       const attacks = attacksOnMe || []
@@ -186,13 +189,13 @@ export default function GameScreen() {
     }
 
     // Game reset / character no longer exists: clear persisted data and redirect to create
-    if (!mePlayer && roomId && sessionId) {
+    if (!mePlayer && rid && sid) {
       // Retry once after short delay - newly created character may not be visible yet (race condition)
-      const retryKey = `koth_retry_${roomId}_${sessionId}`
+      const retryKey = `koth_retry_${rid}_${sid}`
       const hasRetried = sessionStorage.getItem(retryKey)
       if (!hasRetried) {
         sessionStorage.setItem(retryKey, '1')
-        setTimeout(() => loadData(), 600)
+        setTimeout(() => loadData(), 800)
         return
       }
       sessionStorage.removeItem(retryKey)
@@ -201,7 +204,7 @@ export default function GameScreen() {
       navigate('/create', { replace: true })
       return
     }
-    sessionStorage.removeItem(`koth_retry_${roomId}_${sessionId}`)
+    sessionStorage.removeItem(`koth_retry_${rid}_${sid}`)
     setLoading(false)
   }, [roomId, sessionId, navigate])
 
@@ -256,9 +259,13 @@ export default function GameScreen() {
   }, [location.state?.showTutorial, navigate])
 
   useEffect(() => {
-    loadData()
+    // Brief delay so localStorage is available after navigation from CharacterCreate
+    const t = setTimeout(() => loadData(), 50)
     const interval = setInterval(loadData, 5000)
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(t)
+      clearInterval(interval)
+    }
   }, [loadData])
 
 
