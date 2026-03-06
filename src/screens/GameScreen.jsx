@@ -29,7 +29,11 @@ export default function GameScreen() {
   const [recapModal, setRecapModal] = useState(null)
   const [recapText, setRecapText] = useState('')
   const [bountyTooltipOpen, setBountyTooltipOpen] = useState(false)
-  const [storeExpanded, setStoreExpanded] = useState(true)
+  const [storeExpanded, setStoreExpanded] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? false : true
+  )
+  const [lastRoundAttackersOnMe, setLastRoundAttackersOnMe] = useState(new Set())
+  const [lastRoundSameTargetAttackers, setLastRoundSameTargetAttackers] = useState(new Set())
   const [pendingPurchase, setPendingPurchase] = useState(null)
   const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
   const bountyBadgeRef = useRef(null)
@@ -65,6 +69,42 @@ export default function GameScreen() {
       .limit(5)
 
     setRoundResults(resultsData || [])
+
+    const lastRoundHour = (resultsData || [])[0]?.hour_index
+    if (lastRoundHour != null) {
+      const { data: attacksOnMeLast } = await supabase
+        .from('attack_allocations')
+        .select('attacker_session_id')
+        .eq('room_id', roomId)
+        .eq('target_session_id', sessionId)
+        .eq('hour_index', lastRoundHour)
+      setLastRoundAttackersOnMe(new Set((attacksOnMeLast || []).map((a) => a.attacker_session_id)))
+
+      const { data: myLastAttack } = await supabase
+        .from('attack_allocations')
+        .select('target_session_id')
+        .eq('room_id', roomId)
+        .eq('attacker_session_id', sessionId)
+        .eq('hour_index', lastRoundHour)
+        .maybeSingle()
+      const myLastTarget = myLastAttack?.target_session_id
+      if (myLastTarget) {
+        const { data: sameTargetAttacks } = await supabase
+          .from('attack_allocations')
+          .select('attacker_session_id')
+          .eq('room_id', roomId)
+          .eq('target_session_id', myLastTarget)
+          .eq('hour_index', lastRoundHour)
+        setLastRoundSameTargetAttackers(
+          new Set((sameTargetAttacks || []).map((a) => a.attacker_session_id).filter((sid) => sid !== sessionId))
+        )
+      } else {
+        setLastRoundSameTargetAttackers(new Set())
+      }
+    } else {
+      setLastRoundAttackersOnMe(new Set())
+      setLastRoundSameTargetAttackers(new Set())
+    }
 
     const { data: myAttacks } = await supabase
       .from('attack_allocations')
@@ -492,6 +532,7 @@ export default function GameScreen() {
           <div className="player-list-scroll">
           {players.map((p, i) => {
             const pItem = items.find((it) => it.id === p.current_item_id)
+            const pAttack = p.attack_points + (pItem?.attack_bonus || 0)
             const pDefense = p.defense_points + (pItem?.defense_bonus || 0)
             const isBounty = p.session_id === bountySessionId
             const isTarget = selectedTargetId === p.session_id && p.session_id !== sessionId
@@ -541,7 +582,7 @@ export default function GameScreen() {
                   <span className="player-detail-mobile player-detail-health">
                     <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
                   </span>
-                  <span className="defense player-detail-mobile" title="Defense">{ICON_DEF} {pDefense}</span>
+                  <span className="stats-row" title="Attack / Defense">{ICON_ATK}{pAttack} {ICON_DEF}{pDefense}</span>
                   {p.last_round_item_id && (
                     <span className="last-item player-detail-mobile" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
                       ⚔
@@ -570,6 +611,8 @@ export default function GameScreen() {
                 {otherPlayers.map((p) => {
                   const isSelected = selectedTargetId === p.session_id
                   const isBounty = p.session_id === bountySessionId
+                  const attackedMeLastRound = lastRoundAttackersOnMe.has(p.session_id)
+                  const hadSameEnemyLastRound = lastRoundSameTargetAttackers.has(p.session_id)
                   return (
                     <button
                       key={p.id}
@@ -582,7 +625,11 @@ export default function GameScreen() {
                       {isSelected && <span className="target-label-badge">{ICON_ATK} Your target</span>}
                       {isBounty && <span className="bounty-badge">🎯</span>}
                       <PixelKnight color={p.color} size="small" />
-                      <span className="target-name">{p.name}</span>
+                      <span className="target-info">
+                        <span className="target-name">{p.name}</span>
+                        {attackedMeLastRound && <span className="target-hint attacked-you">Attacked you last round</span>}
+                        {hadSameEnemyLastRound && !attackedMeLastRound && <span className="target-hint same-enemy">Had the same enemy last round</span>}
+                      </span>
                     </button>
                   )
                 })}
@@ -629,7 +676,7 @@ export default function GameScreen() {
               aria-label={storeExpanded ? 'Collapse item store' : 'Expand item store'}
             >
               <h3>ITEM STORE</h3>
-              <span className="store-toggle-icon">{storeExpanded ? '−' : '+'}</span>
+              <span className="store-toggle-icon" aria-hidden="true">{storeExpanded ? '—' : '▼'}</span>
             </button>
             <div className="store-section-content">
               <div className="items-grid">

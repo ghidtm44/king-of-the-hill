@@ -223,9 +223,10 @@
   color: var(--text-muted);
 }
 
-.player-info .defense {
+.player-info .stats-row {
   font-size: 0.35rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .rank-cell {
@@ -335,8 +336,15 @@
 }
 
 .store-toggle-icon {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: bold;
+  color: var(--accent-gold);
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.store-section.collapsed .store-toggle-icon {
+  font-size: 1.4rem;
 }
 
 .store-section.collapsed .store-section-toggle {
@@ -537,11 +545,24 @@
   cursor: not-allowed;
 }
 
-.attack-target .target-name {
+.attack-target .target-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.attack-target .target-name {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.attack-target .target-hint {
+  font-size: 0.35rem;
+  color: var(--accent-gold);
+  font-weight: bold;
 }
 
 .attack-target .target-pts {
@@ -1047,6 +1068,10 @@
 
   .player-list-scroll > .player-row .player-info .points {
     font-size: 0.35rem;
+  }
+
+  .player-list-scroll > .player-row .player-info .stats-row {
+    font-size: 0.3rem;
   }
 
   .player-list-scroll > .player-row .player-detail-mobile {
