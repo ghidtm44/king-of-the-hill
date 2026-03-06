@@ -21,6 +21,7 @@ export default function GameScreen() {
   const [hourIndex, setHourIndex] = useState(0)
   const [purchaseError, setPurchaseError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [attacksAgainstMe, setAttacksAgainstMe] = useState([])
 
   const loadData = useCallback(async () => {
     if (!roomId || !sessionId) {
@@ -64,6 +65,23 @@ export default function GameScreen() {
       alloc[a.target_session_id] = (alloc[a.target_session_id] || 0) + a.attack_points_used
     })
     setAttackAllocations(alloc)
+
+    const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
+    if (mePlayer?.is_eliminated) {
+      const { data: attacksOnMe } = await supabase
+        .from('attack_allocations')
+        .select('*')
+        .eq('room_id', roomId)
+        .eq('target_session_id', sessionId)
+        .order('hour_index', { ascending: false })
+        .limit(20)
+      const attacks = attacksOnMe || []
+      const lastHour = attacks[0]?.hour_index
+      const lastRoundAttacks = lastHour != null ? attacks.filter((a) => a.hour_index === lastHour) : attacks
+      setAttacksAgainstMe(lastRoundAttacks)
+    } else {
+      setAttacksAgainstMe([])
+    }
 
     setLoading(false)
   }, [roomId, sessionId, navigate])
@@ -182,6 +200,38 @@ export default function GameScreen() {
     )
   }
 
+  if (me.is_eliminated) {
+    const attackerNames = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
+    const lastRoundResult = roundResults[0]
+    return (
+      <div className="elimination-screen">
+        <h1>💀 ELIMINATED 💀</h1>
+        <p className="elim-msg">You have been defeated!</p>
+        <section className="elim-attackers">
+          <h3>WHO ATTACKED YOU (last round)</h3>
+          {attacksAgainstMe.length === 0 ? (
+            <p>No recorded attacks</p>
+          ) : (
+            <ul>
+              {attacksAgainstMe.map((a) => (
+                <li key={a.id}>
+                  <strong>{attackerNames(a.attacker_session_id)}</strong> hit you for <strong>{a.attack_points_used}</strong> attack points
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        {lastRoundResult && (
+          <section className="elim-recap">
+            <h3>ROUND RECAP</h3>
+            <pre>{lastRoundResult.result_text}</pre>
+          </section>
+        )}
+        <button onClick={() => navigate('/')}>BACK TO MENU</button>
+      </div>
+    )
+  }
+
   const myItem = items.find((i) => i.id === me.current_item_id)
   const effectiveAttack = me.attack_points + (myItem?.attack_bonus || 0)
   const effectiveDefense = me.defense_points + (myItem?.defense_bonus || 0)
@@ -228,6 +278,39 @@ export default function GameScreen() {
         </aside>
 
         <main className="game-main">
+          <section className="my-items-section">
+            <h3>MY ITEMS</h3>
+            {myItem ? (
+              <div className="equipped-item">
+                <span className="item-name">{myItem.name}</span>
+                <span className="item-bonus">+{myItem.attack_bonus} atk, +{myItem.defense_bonus} def</span>
+              </div>
+            ) : (
+              <p className="no-item">No item equipped</p>
+            )}
+          </section>
+
+          <section className="pending-attacks-section">
+            <h3>PENDING ATTACKS (this hour)</h3>
+            {totalAllocated === 0 ? (
+              <p className="no-pending">No attacks selected. You'll attack randomly if you don't choose.</p>
+            ) : (
+              <ul className="pending-list">
+                {Object.entries(attackAllocations)
+                  .filter(([, pts]) => pts > 0)
+                  .map(([targetSid, pts]) => {
+                    const target = players.find((p) => p.session_id === targetSid)
+                    return target ? (
+                      <li key={targetSid}>
+                        <PixelKnight color={target.color} size="small" />
+                        <strong>{target.name}</strong>: {pts} attack pts
+                      </li>
+                    ) : null
+                  })}
+              </ul>
+            )}
+          </section>
+
           <section className="attack-section">
             <h3>ATTACK ({totalAllocated}/{effectiveAttack})</h3>
             {otherPlayers.length === 0 ? (
@@ -278,13 +361,16 @@ export default function GameScreen() {
       </div>
 
       <div className="round-log">
-        <h3>ROUND RESULTS</h3>
+        <h3>HOURLY RECAP — Who attacked who</h3>
         <div className="log-content">
           {roundResults.length === 0 ? (
-            <p>No rounds yet</p>
+            <p>No rounds yet. Results appear here after each hour.</p>
           ) : (
             roundResults.map((r) => (
-              <pre key={r.id}>{r.result_text}</pre>
+              <div key={r.id} className="round-block">
+                <div className="round-header">Hour {r.hour_index}</div>
+                <pre className="round-detail">{r.result_text}</pre>
+              </div>
             ))
           )}
         </div>
