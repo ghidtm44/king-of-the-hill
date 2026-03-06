@@ -13,21 +13,21 @@ export async function handler(event, context) {
 
     let prompt
     if (type === 'last_round') {
-      prompt = `You are a whimsical medieval bard narrating a battle arena recap. Write a fun, personalized 2-3 sentence recap for ${playerName} about what happened in the last round.
+      prompt = `Write a brief 2-3 sentence recap for ${playerName} about what happened in the last round. Use plain, clear language—no medieval or fantasy tone.
 
 Game mechanics: Players choose one target per round. Damage = Total Attack - Defense (capped at 5). The highest-points player is the Bounty; attacking the bounty gives +2 pts if they take damage, but if they block (take 0 damage) each attacker loses 1 HP. All survivors get +1 pt per round.
 
 Round data: ${JSON.stringify(roundData)}
 
-Use a playful medieval tone. Be specific to their experience. Keep it under 100 words.`
+Then add 1-2 concrete suggestions based on their gameplay: e.g., consider coordinating with others to hit the Bounty, or buy Armor if taking lots of damage, or target weaker players to farm points. Keep it under 120 words.`
     } else {
-      prompt = `You are a whimsical medieval bard narrating an epic battle arena saga. Write a fun, engaging recap of the entire game so far for ${playerName}.
+      prompt = `Write a clear 4-6 sentence recap of the entire game so far for ${playerName}. Use plain language—no medieval or fantasy tone.
 
-Game mechanics: Hourly rounds, single-target attacks, Damage = Total Attack - Defense (cap 5). Bounty (highest pts) gives +2 pts for successful hits but counterattacks (1 HP) if blocked. Survivors get +1 pt/round.
+Game mechanics: Rounds every 2 min, single-target attacks, Damage = Total Attack - Defense (cap 5). Bounty (highest pts) gives +2 pts for successful hits but counterattacks (1 HP) if blocked. Survivors get +1 pt/round.
 
 Game data: ${JSON.stringify(gameData)}
 
-Use a playful medieval tone. Summarize key moments, battles, fortunes. Keep it to 4-6 sentences.`
+Then add 2-3 strategic suggestions based on their overall performance: e.g., adjust targeting, consider different items, or change approach to the Bounty. Be specific and actionable.`
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

@@ -30,6 +30,7 @@ export default function GameScreen() {
   const [recapText, setRecapText] = useState('')
   const [recapLoading, setRecapLoading] = useState(false)
   const [recapError, setRecapError] = useState('')
+  const [showRulesPopup, setShowRulesPopup] = useState(false)
   const hasUnsavedAttackChanges = useRef(false)
 
   const loadData = useCallback(async () => {
@@ -93,6 +94,18 @@ export default function GameScreen() {
 
     setLoading(false)
   }, [roomId, sessionId, navigate])
+
+  useEffect(() => {
+    if (!me || me.is_eliminated) return
+    if (!localStorage.getItem('koth_rules_seen')) {
+      setShowRulesPopup(true)
+    }
+  }, [me])
+
+  function dismissRulesPopup() {
+    localStorage.setItem('koth_rules_seen', 'true')
+    setShowRulesPopup(false)
+  }
 
   useEffect(() => {
     loadData()
@@ -402,7 +415,7 @@ export default function GameScreen() {
       <div className="game-header">
         <button className="back-btn" onClick={() => navigate('/')}>← EXIT</button>
         <div className="timer">
-          Next eval: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+          Next round: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
         </div>
         <button
           className="recap-btn"
@@ -566,10 +579,10 @@ export default function GameScreen() {
       </div>
 
       <div className="round-log">
-        <h3>HOURLY RECAP — Who attacked who</h3>
+        <h3>ROUND RECAP — Who attacked who</h3>
         <div className="log-content">
           {roundResults.length === 0 ? (
-            <p>No rounds yet. Results appear here every hour.</p>
+            <p>No rounds yet. Results appear here every round.</p>
           ) : (
             roundResults.map((r) => (
               <div key={r.id} className="round-block">
@@ -581,6 +594,23 @@ export default function GameScreen() {
         </div>
       </div>
 
+      {showRulesPopup && (
+        <div className="rules-popup-overlay" onClick={dismissRulesPopup}>
+          <div className="rules-popup" onClick={(e) => e.stopPropagation()}>
+            <h3>How to Play</h3>
+            <div className="rules-popup-content">
+              <p><strong>Goal:</strong> Get the most points by the end. Survive by keeping HP above 0.</p>
+              <p><strong>Each round:</strong> Pick one player to attack. If you don't choose, you'll attack randomly.</p>
+              <p><strong>Combat:</strong> Your attack + others' attacks add up. If total exceeds their defense, they take damage (max 5 per round).</p>
+              <p><strong>Bounty:</strong> The player with the most points is the Bounty (🎯). Hitting them gives +2 pts if they take damage—but if they block, you lose 1 HP.</p>
+              <p><strong>Points:</strong> +1 for surviving each round. +1 for dealing damage (+2 if it's the Bounty).</p>
+              <p><strong>Items:</strong> Buy Sword (atk), Shield (def), Armor (reduce damage), or Potion (heal).</p>
+            </div>
+            <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
+          </div>
+        </div>
+      )}
+
       {recapModal && (
         <div className="recap-modal" onClick={() => setRecapModal(null)}>
           <div className="recap-panel" onClick={(e) => e.stopPropagation()}>
@@ -590,7 +620,7 @@ export default function GameScreen() {
             </div>
             <div className="recap-body">
               {recapLoading ? (
-                <p>Summoning the bard...</p>
+                <p>Generating recap...</p>
               ) : recapError ? (
                 <p className="recap-error">{recapError}</p>
               ) : (

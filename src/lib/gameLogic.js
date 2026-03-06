@@ -20,47 +20,28 @@ export const DAMAGE_CAP_PER_ROUND = 5
 export const MAX_PLAYERS = 10
 export const MAX_NAME_LENGTH = 10
 
-// EST timezone helpers - Rounds run every hour (12pm to 11am next day)
+// Round interval: 2 minutes for testing (change to 3600 for production hourly)
+export const ROUND_INTERVAL_SECONDS = 120
+
 export function getCurrentHourIndex() {
   const now = new Date()
-  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const hours = est.getHours()
-  const minutes = est.getMinutes()
-  const seconds = est.getSeconds()
+  const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+  const roundIndex = Math.floor(totalSeconds / ROUND_INTERVAL_SECONDS) + 1
+  const secondsIntoRound = totalSeconds % ROUND_INTERVAL_SECONDS
+  const isEvaluationSecond = secondsIntoRound === ROUND_INTERVAL_SECONDS - 1
 
-  // Game runs 12pm to 11am next day (24 rounds)
-  let hourFromStart = hours - 12
-  if (hourFromStart < 0) hourFromStart += 24
-
-  // Round index: 1-based, Round 1 at 12:00:00, Round 2 at 1:00:00, etc.
-  const roundIndex = hourFromStart + 1
-
-  // Evaluate at last second of each hour (XX:59:59)
-  const isEvaluationSecond = minutes === 59 && seconds === 59
-
-  return { hourIndex: roundIndex, minutes, seconds, isEvaluationSecond }
+  return { hourIndex: roundIndex, isEvaluationSecond }
 }
 
 export function isGameActive() {
-  const now = new Date()
-  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const hours = est.getHours()
-  const minutes = est.getMinutes()
-
-  if (hours === 11 && minutes >= 0) return false
-  if (hours < 12) return false
-  return true
+  return true // Always active for testing
 }
 
 export function getTimeUntilNextHour() {
   const now = new Date()
-  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  const minutes = est.getMinutes()
-  const seconds = est.getSeconds()
-
-  // Seconds until XX:59:59 (evaluation moment)
-  const secondsIntoHour = minutes * 60 + seconds
-  const secondsUntilEval = 59 * 60 + 59 - secondsIntoHour
+  const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+  const secondsIntoRound = totalSeconds % ROUND_INTERVAL_SECONDS
+  const secondsUntilEval = Math.max(0, ROUND_INTERVAL_SECONDS - 1 - secondsIntoRound)
 
   return {
     minutes: Math.floor(secondsUntilEval / 60),

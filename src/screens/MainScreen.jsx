@@ -30,8 +30,8 @@ export default function MainScreen() {
       </div>
 
       <div className="main-content">
-        <h1 className="title">KING OF THE HILL</h1>
-        <p className="subtitle">Daily Battle Arena</p>
+        <h1 className="title">WOLFPACK WARRIORS</h1>
+        <p className="subtitle">Battle Arena</p>
         
         <div className="menu-buttons">
           {hasActiveGame && (
