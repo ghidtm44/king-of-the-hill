@@ -136,6 +136,8 @@ export default function CharacterCreate() {
               <p><strong>Bounty:</strong> The player with the most points is the Bounty (🎯). Hitting them gives +2 pts if they take damage—but if they block, you lose 1 HP.</p>
               <p><strong>Points:</strong> +1 for surviving each round. +1 for dealing damage (+2 if it's the Bounty).</p>
               <p><strong>Items:</strong> Buy Sword ({ICON_ATK}), Shield ({ICON_DEF}), Armor (reduce damage), or Potion (heal). Items last 3 rounds.</p>
+              <p><strong>Scavenge:</strong> Once per round—40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP.</p>
+              <p><strong>Stance:</strong> Pick Aggressive (+1 {ICON_ATK}), Defensive (+1 {ICON_DEF}), or Greedy (+1 pt if you survive).</p>
             </div>
             <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
           </div>

@@ -34,6 +34,9 @@ export default function GameScreen() {
   )
   const [lastRoundAttackersOnMe, setLastRoundAttackersOnMe] = useState(new Set())
   const [lastRoundSameTargetAttackers, setLastRoundSameTargetAttackers] = useState(new Set())
+  const [scavengeUsedThisRound, setScavengeUsedThisRound] = useState(false)
+  const [currentStance, setCurrentStance] = useState(null)
+  const [scavengeFeedback, setScavengeFeedback] = useState(null)
   const [pendingPurchase, setPendingPurchase] = useState(null)
   const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
   const bountyBadgeRef = useRef(null)
@@ -117,6 +120,24 @@ export default function GameScreen() {
     if (!hasUnsavedAttackChanges.current) {
       setSelectedTargetId(myTarget)
     }
+
+    const { data: scavengeData } = await supabase
+      .from('scavenge_uses')
+      .select('id')
+      .eq('room_id', roomId)
+      .eq('session_id', sessionId)
+      .eq('hour_index', hi)
+      .maybeSingle()
+    setScavengeUsedThisRound(!!scavengeData)
+
+    const { data: stanceData } = await supabase
+      .from('player_stances')
+      .select('stance')
+      .eq('room_id', roomId)
+      .eq('session_id', sessionId)
+      .eq('hour_index', hi)
+      .maybeSingle()
+    setCurrentStance(stanceData?.stance || null)
 
     const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
     if (mePlayer?.is_eliminated) {
@@ -366,7 +387,8 @@ export default function GameScreen() {
     if (!me || me.is_eliminated) return
 
     const myItem = items.find((i) => i.id === me.current_item_id)
-    const effAttack = me.attack_points + (myItem?.attack_bonus || 0)
+    const stanceBonus = currentStance === 'aggressive' ? 1 : 0
+    const effAttack = me.attack_points + (myItem?.attack_bonus || 0) + stanceBonus
     const others = players.filter((p) => !p.is_eliminated && p.session_id !== sessionId)
 
     // If no target selected, system will assign random at eval time - we can submit empty
@@ -388,6 +410,64 @@ export default function GameScreen() {
     hasUnsavedAttackChanges.current = false
     setSelectedTargetId(targetSessionId)
     loadData()
+  }
+
+  async function handleScavenge() {
+    if (!me || me.is_eliminated || scavengeUsedThisRound || !roomId || !sessionId) return
+    setScavengeFeedback(null)
+    const roll = Math.random()
+    let result, pointsGain, hpChange
+    if (roll < 0.4) {
+      result = 'coins'
+      pointsGain = 1
+      hpChange = 0
+    } else if (roll < 0.45) {
+      result = 'treasure'
+      pointsGain = 3
+      hpChange = 0
+    } else if (roll < 0.85) {
+      result = 'nothing'
+      pointsGain = 0
+      hpChange = 0
+    } else {
+      result = 'ambushed'
+      pointsGain = 0
+      hpChange = -1
+    }
+    const { error: insertErr } = await supabase.from('scavenge_uses').insert({
+      room_id: roomId,
+      session_id: sessionId,
+      hour_index: hourIndex,
+      result,
+    })
+    if (insertErr?.code === '23505') {
+      setScavengeUsedThisRound(true)
+      return
+    }
+    if (insertErr) return
+    const newPoints = Math.max(0, me.total_points + pointsGain)
+    const newHp = Math.max(0, Math.min(MAX_HEALTH, me.health_points + hpChange))
+    await supabase.from('players').update({ total_points: newPoints, health_points: newHp }).eq('id', me.id)
+    setScavengeUsedThisRound(true)
+    const msg = result === 'coins' ? '+1 Point!' : result === 'treasure' ? '+3 Points!' : result === 'ambushed' ? '-1 HP' : 'Nothing found'
+    setScavengeFeedback(msg)
+    setTimeout(() => setScavengeFeedback(null), 2500)
+    loadData()
+  }
+
+  async function setStance(stance) {
+    if (!me || me.is_eliminated || !roomId || !sessionId) return
+    await supabase.from('player_stances').delete().eq('room_id', roomId).eq('session_id', sessionId).eq('hour_index', hourIndex)
+    const { error } = await supabase.from('player_stances').insert({
+      room_id: roomId,
+      session_id: sessionId,
+      hour_index: hourIndex,
+      stance,
+    })
+    if (!error) {
+      setCurrentStance(stance)
+      loadData()
+    }
   }
 
   function requestPurchase(item) {
@@ -507,6 +587,49 @@ export default function GameScreen() {
         <button className="back-btn" onClick={() => navigate('/')}>← EXIT</button>
         <div className="timer">
           Next round: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+        </div>
+        <div className="header-actions">
+          <div className="scavenge-wrap">
+            <button
+              type="button"
+              className="scavenge-btn"
+              onClick={handleScavenge}
+              disabled={me?.is_eliminated || scavengeUsedThisRound}
+              title="Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP"
+            >
+              🔍 Scavenge
+            </button>
+            {scavengeFeedback && <span className="scavenge-feedback">{scavengeFeedback}</span>}
+          </div>
+          <div className="stance-wrap">
+            <button
+              type="button"
+              className={`stance-btn ${currentStance === 'aggressive' ? 'selected' : ''}`}
+              onClick={() => setStance('aggressive')}
+              disabled={me?.is_eliminated}
+              title="+1 Attack this round"
+            >
+              ⚔ Aggressive
+            </button>
+            <button
+              type="button"
+              className={`stance-btn ${currentStance === 'defensive' ? 'selected' : ''}`}
+              onClick={() => setStance('defensive')}
+              disabled={me?.is_eliminated}
+              title="+1 Defense this round"
+            >
+              🛡 Defensive
+            </button>
+            <button
+              type="button"
+              className={`stance-btn ${currentStance === 'greedy' ? 'selected' : ''}`}
+              onClick={() => setStance('greedy')}
+              disabled={me?.is_eliminated}
+              title="+1 extra point if you survive"
+            >
+              💰 Greedy
+            </button>
+          </div>
         </div>
         <button
           className="recap-btn"

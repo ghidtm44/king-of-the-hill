@@ -41,15 +41,25 @@ export async function evaluateRound(roomId, hourIndex) {
 
   if (attacksErr) return { error: attacksErr.message }
 
-  // Build effective stats for each survivor
+  // Load stances for this round
+  const { data: stancesData } = await supabase
+    .from('player_stances')
+    .select('session_id, stance')
+    .eq('room_id', roomId)
+    .eq('hour_index', hourIndex)
+  const stanceBySession = Object.fromEntries((stancesData || []).map((s) => [s.session_id, s.stance]))
+
+  // Build effective stats for each survivor (including stance bonuses)
   const survivorMap = {}
   survivors.forEach((p) => {
     const item = p.current_item_id ? itemsMap[p.current_item_id] : null
+    const stance = stanceBySession[p.session_id]
     survivorMap[p.session_id] = {
       ...p,
-      effectiveAttack: p.attack_points + (item?.attack_bonus || 0),
-      effectiveDefense: p.defense_points + (item?.defense_bonus || 0),
+      effectiveAttack: p.attack_points + (item?.attack_bonus || 0) + (stance === 'aggressive' ? 1 : 0),
+      effectiveDefense: p.defense_points + (item?.defense_bonus || 0) + (stance === 'defensive' ? 1 : 0),
       damageReduction: item?.damage_reduction || 0,
+      stance,
     }
   })
 
@@ -67,7 +77,8 @@ export async function evaluateRound(roomId, hourIndex) {
     if (others.length === 0) continue
     const randomTarget = others[Math.floor(Math.random() * others.length)]
     const item = p.current_item_id ? itemsMap[p.current_item_id] : null
-    const attackValue = p.attack_points + (item?.attack_bonus || 0)
+    const stance = stanceBySession[p.session_id]
+    const attackValue = p.attack_points + (item?.attack_bonus || 0) + (stance === 'aggressive' ? 1 : 0)
     attacksToProcess.push({
       attacker_session_id: p.session_id,
       target_session_id: randomTarget.session_id,
@@ -75,14 +86,15 @@ export async function evaluateRound(roomId, hourIndex) {
     })
   }
 
-  // Group attacks by target
+  // Group attacks by target (add stance bonus to attack value)
   const targetToAttackers = {}
   attacksToProcess.forEach((a) => {
     if (!survivorMap[a.attacker_session_id]) return // skip eliminated attackers
     if (!targetToAttackers[a.target_session_id]) targetToAttackers[a.target_session_id] = []
+    const stanceBonus = stanceBySession[a.attacker_session_id] === 'aggressive' ? 1 : 0
     targetToAttackers[a.target_session_id].push({
       sessionId: a.attacker_session_id,
-      attackValue: a.attack_points_used,
+      attackValue: a.attack_points_used + stanceBonus,
     })
   })
 
@@ -151,9 +163,11 @@ export async function evaluateRound(roomId, hourIndex) {
     if (p) counterattackLog.push(`${p.name} loses 1 HP (bounty counterattack)`)
   })
 
-  // Survival income: +1 for all survivors
+  // Survival income: +1 for all survivors, +1 extra for greedy stance
   survivors.forEach((p) => {
-    scoreGains[p.session_id] = (scoreGains[p.session_id] || 0) + 1
+    const base = 1
+    const greedyBonus = stanceBySession[p.session_id] === 'greedy' ? 1 : 0
+    scoreGains[p.session_id] = (scoreGains[p.session_id] || 0) + base + greedyBonus
   })
 
   // Build result text (spec format)
