@@ -132,6 +132,28 @@
   box-shadow: 0 0 0 2px var(--accent-red);
 }
 
+.player-row.attacking {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px var(--accent-gold);
+  position: relative;
+}
+
+.player-row.attacking::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent-gold);
+}
+
+.target-badge {
+  margin-right: 0.25rem;
+  opacity: 0.9;
+  font-size: 0.45rem;
+}
+
 .bounty-label-wrap {
   position: relative;
   flex-shrink: 0;
@@ -274,7 +296,6 @@
 }
 
 .my-items-section,
-.pending-attacks-section,
 .attack-section,
 .store-section {
   background: var(--bg-medium);
@@ -424,30 +445,6 @@
 .my-items-section .no-item {
   font-size: 0.45rem;
   color: var(--text-muted);
-}
-
-.pending-attacks-section .no-pending {
-  font-size: 0.4rem;
-  color: var(--text-muted);
-}
-
-.pending-list {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-}
-
-.pending-list li,
-.pending-target {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.45rem;
-  background: var(--bg-light);
-  border: 2px solid var(--border-pixel);
 }
 
 .attack-section h3,

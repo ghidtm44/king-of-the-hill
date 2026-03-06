@@ -494,6 +494,7 @@ export default function GameScreen() {
             const pItem = items.find((it) => it.id === p.current_item_id)
             const pDefense = p.defense_points + (pItem?.defense_bonus || 0)
             const isBounty = p.session_id === bountySessionId
+            const isTarget = selectedTargetId === p.session_id && p.session_id !== sessionId
             const currentRank = i + 1
             const prevRank = p.previous_round_rank
             const rankChange = prevRank == null ? 'same' : currentRank < prevRank ? 'up' : currentRank > prevRank ? 'down' : 'same'
@@ -502,7 +503,7 @@ export default function GameScreen() {
                 key={p.id}
                 role="button"
                 tabIndex={0}
-                className={`player-row ${p.is_eliminated ? 'eliminated' : ''} ${p.session_id === sessionId ? 'me' : ''} ${selectedPlayer?.id === p.id ? 'selected' : ''} ${isBounty ? 'bounty' : ''}`}
+                className={`player-row ${p.is_eliminated ? 'eliminated' : ''} ${p.session_id === sessionId ? 'me' : ''} ${selectedPlayer?.id === p.id ? 'selected' : ''} ${isBounty ? 'bounty' : ''} ${isTarget ? 'attacking' : ''}`}
                 onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
               >
@@ -529,7 +530,10 @@ export default function GameScreen() {
                 )}
                 <PixelKnight color={p.color} size="small" />
                 <div className="player-info">
-                  <span className="name">{p.name}</span>
+                  <span className="name">
+                    {isTarget && <span className="target-badge" title="Your attack target">{ICON_ATK}</span>}
+                    {p.name}
+                  </span>
                   <span className="class-label player-detail-mobile">{p.class_type}</span>
                   <span className="points">{p.total_points} pts</span>
                   <span className="player-detail-mobile player-detail-health">
@@ -554,28 +558,9 @@ export default function GameScreen() {
         </aside>
 
         <main className="game-main">
-          <section className="pending-attacks-section">
-            <h3>PENDING ATTACK (this round)</h3>
-            {!selectedTargetId ? (
-              <p className="no-pending">No target selected. You'll attack randomly if you don't choose.</p>
-            ) : (
-              <div className="pending-list">
-                {(() => {
-                  const target = players.find((p) => p.session_id === selectedTargetId)
-                  return target ? (
-                    <div className="pending-target">
-                      <PixelKnight color={target.color} size="small" />
-                      <strong>{target.name}</strong> ({effectiveAttack} {ICON_ATK})
-                    </div>
-                  ) : null
-                })()}
-              </div>
-            )}
-          </section>
-
           <section className="attack-section">
             <h3>CHOOSE TARGET</h3>
-            <p className="attack-hint">Pick one player to attack. Change anytime before confirming.</p>
+            <p className="attack-hint">Pick a target below. Your choice is highlighted in Rankings.</p>
             {otherPlayers.length === 0 ? (
               <p>No other players</p>
             ) : (
