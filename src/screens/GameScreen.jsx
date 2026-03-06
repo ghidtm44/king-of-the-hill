@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
 import { checkAndEndGame } from '../lib/endGame'
-import { getCurrentHourIndex, getTimeUntilNextHour, shouldEndPreviousGame, MAX_HEALTH, ICON_ATK, ICON_DEF } from '../lib/gameLogic'
+import { getCurrentHourIndex, getTimeUntilNextHour, shouldEndPreviousGame, MAX_HEALTH, ICON_ATK, ICON_DEF, canNewPlayerAttackInFirstRound } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
 import HealthBar from '../components/HealthBar'
 import './GameScreen.css'
@@ -42,7 +42,6 @@ export default function GameScreen() {
   const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
   const bountyBadgeRef = useRef(null)
   const bountyTooltipRef = useRef(null)
-  const hasUnsavedAttackChanges = useRef(false)
 
   const loadData = useCallback(async () => {
     if (!roomId || !sessionId) {
@@ -117,10 +116,15 @@ export default function GameScreen() {
       .eq('attacker_session_id', sessionId)
       .eq('hour_index', hi)
 
-    const myTarget = (myAttacks || [])[0]?.target_session_id || null
-    if (!hasUnsavedAttackChanges.current) {
-      setSelectedTargetId(myTarget)
+    const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
+    const canAttackThisRound = !mePlayer?.joined_at || canNewPlayerAttackInFirstRound(mePlayer.joined_at, hi)
+
+    if (!canAttackThisRound) {
+      await supabase.from('attack_allocations').delete().eq('room_id', roomId).eq('attacker_session_id', sessionId).eq('hour_index', hi)
     }
+
+    const myTarget = canAttackThisRound ? ((myAttacks || [])[0]?.target_session_id || null) : null
+    setSelectedTargetId(myTarget)
 
     const { data: scavengeData } = await supabase
       .from('scavenge_uses')
@@ -226,9 +230,6 @@ export default function GameScreen() {
     return () => clearInterval(interval)
   }, [loadData])
 
-  useEffect(() => {
-    hasUnsavedAttackChanges.current = false
-  }, [hourIndex])
 
   function buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, roundIndex) {
     const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
@@ -393,32 +394,30 @@ export default function GameScreen() {
     }
   }, [roomId])
 
-  async function submitAttacks() {
-    if (!me || me.is_eliminated) return
+  async function persistAttackTarget(targetSessionId) {
+    if (!me || me.is_eliminated || !roomId || !sessionId) return
 
     const myItem = items.find((i) => i.id === me.current_item_id)
     const stanceBonus = currentStance === 'aggressive' ? 1 : 0
     const effAttack = me.attack_points + (myItem?.attack_bonus || 0) + stanceBonus
     const others = players.filter((p) => !p.is_eliminated && p.session_id !== sessionId)
 
-    // If no target selected, system will assign random at eval time - we can submit empty
-    const targetSessionId = selectedTargetId && others.some((p) => p.session_id === selectedTargetId)
-      ? selectedTargetId
+    const validTarget = targetSessionId && others.some((p) => p.session_id === targetSessionId)
+      ? targetSessionId
       : null
 
     await supabase.from('attack_allocations').delete().eq('room_id', roomId).eq('attacker_session_id', sessionId).eq('hour_index', hourIndex)
 
-    if (targetSessionId) {
+    if (validTarget) {
       await supabase.from('attack_allocations').insert({
         room_id: roomId,
         attacker_session_id: sessionId,
-        target_session_id: targetSessionId,
+        target_session_id: validTarget,
         attack_points_used: effAttack,
         hour_index: hourIndex,
       })
     }
-    hasUnsavedAttackChanges.current = false
-    setSelectedTargetId(targetSessionId)
+    setSelectedTargetId(validTarget)
     loadData()
   }
 
@@ -532,8 +531,10 @@ export default function GameScreen() {
   }
 
   function selectTarget(targetSessionId) {
-    hasUnsavedAttackChanges.current = true
-    setSelectedTargetId((prev) => (prev === targetSessionId ? null : targetSessionId))
+    if (!canAttackThisRound) return
+    const newTarget = selectedTargetId === targetSessionId ? null : targetSessionId
+    setSelectedTargetId(newTarget)
+    persistAttackTarget(newTarget)
   }
 
   if (loading) return <div className="loading">Loading...</div>
@@ -583,6 +584,7 @@ export default function GameScreen() {
     )
   }
 
+  const canAttackThisRound = !me?.joined_at || canNewPlayerAttackInFirstRound(me.joined_at, hourIndex)
   const myItem = items.find((i) => i.id === me.current_item_id)
   const attackMod = (myItem?.attack_bonus || 0) + (currentStance === 'aggressive' ? 1 : 0)
   const defenseMod = (myItem?.defense_bonus || 0) + (currentStance === 'defensive' ? 1 : 0)
@@ -769,7 +771,11 @@ export default function GameScreen() {
         <main className="game-main">
           <section className="attack-section">
             <h3>CHOOSE TARGET</h3>
-            <p className="attack-hint">Pick a target below. Your choice is highlighted in Rankings.</p>
+            {canAttackThisRound ? (
+              <p className="attack-hint">Pick a target below. Your choice is highlighted in Rankings.</p>
+            ) : (
+              <p className="attack-hint attack-blocked">New players can't attack in the last 15 min of their first round. You can attack next round.</p>
+            )}
             {otherPlayers.length === 0 ? (
               <p>No other players</p>
             ) : (
@@ -785,8 +791,9 @@ export default function GameScreen() {
                       type="button"
                       className={`attack-target ${isSelected ? 'selected' : ''} ${isBounty ? 'bounty' : ''}`}
                       onClick={() => selectTarget(p.session_id)}
-                      disabled={me.is_eliminated}
+                      disabled={me.is_eliminated || !canAttackThisRound}
                       aria-label={`Attack ${p.name}`}
+                      title={!canAttackThisRound ? 'New players cannot attack in the last 15 min of their first round' : undefined}
                     >
                       {isSelected && <span className="target-label-badge">{ICON_ATK} Your target</span>}
                       {isBounty && <span className="bounty-badge">🎯</span>}
@@ -801,9 +808,6 @@ export default function GameScreen() {
                 })}
               </div>
             )}
-            <button className="submit-attacks" onClick={submitAttacks} disabled={me.is_eliminated}>
-              CONFIRM ATTACK
-            </button>
           </section>
 
           <section className="my-items-section">

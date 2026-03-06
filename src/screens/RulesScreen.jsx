@@ -31,7 +31,7 @@ export default function RulesScreen() {
 
         <section>
           <h2>EACH ROUND</h2>
-          <p>Pick one player to attack. If you don't choose, you attack randomly. You can't attack yourself.</p>
+          <p>Tap a player to attack them—your choice saves immediately. Tap another to switch, or tap the same one to clear. No target? You attack randomly.</p>
         </section>
 
         <section>
@@ -51,6 +51,21 @@ export default function RulesScreen() {
             <li>+1 for surviving each round</li>
             <li>+1 for dealing damage (+2 if Bounty)</li>
             <li>Spend points on items</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>SCAVENGE</h2>
+          <p>Once per round. Tap for a random result: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP.</p>
+        </section>
+
+        <section>
+          <h2>STANCE</h2>
+          <p>Pick one each round:</p>
+          <ul>
+            <li><strong>Aggressive:</strong> +1 {ICON_ATK}</li>
+            <li><strong>Defensive:</strong> +1 {ICON_DEF}</li>
+            <li><strong>Greedy:</strong> +1 pt if you survive</li>
           </ul>
         </section>
 

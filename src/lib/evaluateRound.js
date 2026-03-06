@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { DAMAGE_CAP_PER_ROUND } from './gameLogic'
+import { DAMAGE_CAP_PER_ROUND, canNewPlayerAttackInFirstRound } from './gameLogic'
 
 export async function evaluateRound(roomId, hourIndex) {
   const { error: insertErr } = await supabase
@@ -16,7 +16,7 @@ export async function evaluateRound(roomId, hourIndex) {
   // Load ALL players (including eliminated) for leaderboard, but survivors for combat
   const { data: allPlayers, error: playersErr } = await supabase
     .from('players')
-    .select('id, session_id, name, attack_points, defense_points, total_points, health_points, current_item_id, item_acquired_round, is_eliminated')
+    .select('id, session_id, name, attack_points, defense_points, total_points, health_points, current_item_id, item_acquired_round, is_eliminated, joined_at')
     .eq('room_id', roomId)
 
   if (playersErr || !allPlayers?.length) {
@@ -73,6 +73,7 @@ export async function evaluateRound(roomId, hourIndex) {
   const attacksToProcess = [...(attacks || [])]
   for (const p of survivors) {
     if (existingAttackers.has(p.session_id)) continue
+    if (!canNewPlayerAttackInFirstRound(p.joined_at, hourIndex)) continue
     const others = othersBySession[p.session_id]
     if (others.length === 0) continue
     const randomTarget = others[Math.floor(Math.random() * others.length)]
@@ -86,10 +87,13 @@ export async function evaluateRound(roomId, hourIndex) {
     })
   }
 
-  // Group attacks by target (add stance bonus to attack value)
+  const attackerJoinedAt = Object.fromEntries(allPlayers.map((p) => [p.session_id, p.joined_at]))
+
+  // Group attacks by target (add stance bonus to attack value). Exclude attacks from new players who joined in last 15 min of first round.
   const targetToAttackers = {}
   attacksToProcess.forEach((a) => {
-    if (!survivorMap[a.attacker_session_id]) return // skip eliminated attackers
+    if (!survivorMap[a.attacker_session_id]) return
+    if (!canNewPlayerAttackInFirstRound(attackerJoinedAt[a.attacker_session_id], hourIndex)) return
     if (!targetToAttackers[a.target_session_id]) targetToAttackers[a.target_session_id] = []
     const stanceBonus = stanceBySession[a.attacker_session_id] === 'aggressive' ? 1 : 0
     targetToAttackers[a.target_session_id].push({

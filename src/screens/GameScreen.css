@@ -733,6 +733,11 @@
   margin-bottom: 0.75rem;
 }
 
+.attack-hint.attack-blocked {
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+
 .attack-target {
   position: relative;
   display: flex;
@@ -816,19 +821,6 @@
   min-width: 1.5rem;
   text-align: center;
   flex-shrink: 0;
-}
-
-.submit-attacks {
-  padding: 0.5rem 1rem;
-  background: var(--accent-red);
-  color: white;
-  border: 4px solid #8b1528;
-  font-size: 0.5rem;
-}
-
-.submit-attacks:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .items-grid {
@@ -1447,12 +1439,6 @@
 
   .attack-targets {
     flex-direction: column;
-  }
-
-  .submit-attacks {
-    padding: 1rem;
-    font-size: 0.55rem;
-    min-height: 48px;
   }
 
   .items-grid {

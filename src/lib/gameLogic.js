@@ -55,6 +55,35 @@ export function shouldEndPreviousGame() {
   return hours === 12
 }
 
+/** Get hour_index and minutes remaining in round for a given timestamp (EST). */
+export function getRoundInfoForTimestamp(timestamp) {
+  const d = new Date(timestamp)
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+  })
+  const parts = formatter.formatToParts(d)
+  const hours = parseInt(parts.find((p) => p.type === 'hour').value, 10)
+  const minutes = parseInt(parts.find((p) => p.type === 'minute').value, 10)
+  const seconds = parseInt(parts.find((p) => p.type === 'second').value, 10)
+  const hourFromStart = hours >= 12 ? hours - 12 : hours + 12
+  const hourIndex = hourFromStart + 1
+  const secondsIntoRound = minutes * 60 + seconds
+  const minutesRemainingInRound = Math.max(0, (ROUND_INTERVAL_SECONDS - secondsIntoRound) / 60)
+  return { hourIndex, minutesRemainingInRound }
+}
+
+/** True if a new player can attack in their first round. False if they joined in the last 15 minutes. */
+export function canNewPlayerAttackInFirstRound(joinedAt, currentHourIndex) {
+  if (!joinedAt) return true
+  const { hourIndex: joinedRound, minutesRemainingInRound } = getRoundInfoForTimestamp(joinedAt)
+  if (joinedRound !== currentHourIndex) return true
+  return minutesRemainingInRound > 15
+}
+
 export function getTimeUntilNextHour() {
   const now = new Date()
   const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))

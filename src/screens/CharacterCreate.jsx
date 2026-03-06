@@ -130,14 +130,14 @@ export default function CharacterCreate() {
           <div className="rules-popup" onClick={(e) => e.stopPropagation()}>
             <h3>How to Play</h3>
             <div className="rules-popup-content">
-              <p><strong>Goal:</strong> Get the most points by the end. Survive by keeping HP above 0.</p>
-              <p><strong>Each round:</strong> Pick one player to attack. If you don't choose, you'll attack randomly.</p>
-              <p><strong>Combat:</strong> Your attack + others' attacks add up. If total exceeds their defense, they take damage (max 5 per round).</p>
-              <p><strong>Bounty:</strong> The player with the most points is the Bounty (🎯). Hitting them gives +2 pts if they take damage—but if they block, you lose 1 HP.</p>
-              <p><strong>Points:</strong> +1 for surviving each round. +1 for dealing damage (+2 if it's the Bounty).</p>
-              <p><strong>Items:</strong> Buy Sword ({ICON_ATK}), Shield ({ICON_DEF}), Armor (reduce damage), or Potion (heal). Items last 3 rounds.</p>
-              <p><strong>Scavenge:</strong> Once per round—40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP.</p>
-              <p><strong>Stance:</strong> Pick Aggressive (+1 {ICON_ATK}), Defensive (+1 {ICON_DEF}), or Greedy (+1 pt if you survive).</p>
+              <p><strong>Goal:</strong> Most points wins. Stay alive (HP &gt; 0).</p>
+              <p><strong>Each round:</strong> Tap a player to attack them—saves instantly. Tap another to switch, or tap same to clear. No target = random.</p>
+              <p><strong>Combat:</strong> Total attack vs defense. Damage capped at 5/round.</p>
+              <p><strong>Bounty</strong> (🎯): Most points. Hit them = +2 pts if damage dealt. Block = you lose 1 HP.</p>
+              <p><strong>Points:</strong> +1 survive, +1 damage (+2 if Bounty).</p>
+              <p><strong>Items:</strong> Sword ({ICON_ATK}), Shield ({ICON_DEF}), Armor, Potion. Last 3 rounds.</p>
+              <p><strong>Scavenge:</strong> Once/round. Chance: +1 pt, +3 pts, nothing, or -1 HP.</p>
+              <p><strong>Stance:</strong> Aggressive +1 {ICON_ATK} · Defensive +1 {ICON_DEF} · Greedy +1 pt if survive.</p>
             </div>
             <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
           </div>
