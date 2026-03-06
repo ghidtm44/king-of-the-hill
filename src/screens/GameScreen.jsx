@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
 import { checkAndEndGame } from '../lib/endGame'
-import { getCurrentHourIndex, getTimeUntilNextHour, shouldEndPreviousGame, MAX_HEALTH } from '../lib/gameLogic'
+import { getCurrentHourIndex, getTimeUntilNextHour, shouldEndPreviousGame, MAX_HEALTH, ICON_ATK, ICON_DEF } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
 import HealthBar from '../components/HealthBar'
 import './GameScreen.css'
@@ -434,7 +434,7 @@ export default function GameScreen() {
             <ul>
               {attacksAgainstMe.map((a) => (
               <li key={a.id}>
-                <strong>{attackerNames(a.attacker_session_id)}</strong> attacked you (Attack {a.attack_points_used})
+                <strong>{attackerNames(a.attacker_session_id)}</strong> attacked you ({a.attack_points_used} {ICON_ATK})
               </li>
               ))}
             </ul>
@@ -482,7 +482,7 @@ export default function GameScreen() {
           <span>{me.name}</span>
           <span>{me.total_points} pts</span>
           <HealthBar current={Math.min(me.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
-          <span>{effectiveAttack}A/{effectiveDefense}D</span>
+          <span title="Attack / Defense">{effectiveAttack}{ICON_ATK}/{effectiveDefense}{ICON_DEF}</span>
         </div>
       </div>
 
@@ -535,7 +535,7 @@ export default function GameScreen() {
                   <span className="player-detail-mobile player-detail-health">
                     <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
                   </span>
-                  <span className="defense player-detail-mobile">Def: {pDefense}</span>
+                  <span className="defense player-detail-mobile" title="Defense">{ICON_DEF} {pDefense}</span>
                   {p.last_round_item_id && (
                     <span className="last-item player-detail-mobile" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
                       ⚔
@@ -565,7 +565,7 @@ export default function GameScreen() {
                   return target ? (
                     <div className="pending-target">
                       <PixelKnight color={target.color} size="small" />
-                      <strong>{target.name}</strong> (Attack {effectiveAttack})
+                      <strong>{target.name}</strong> ({effectiveAttack} {ICON_ATK})
                     </div>
                   ) : null
                 })()}
@@ -615,7 +615,7 @@ export default function GameScreen() {
                     ? `+${myItem.hp_on_purchase} HP`
                     : myItem.damage_reduction
                       ? `-${myItem.damage_reduction} dmg`
-                      : `+${myItem.attack_bonus || 0} atk, +${myItem.defense_bonus || 0} def`}
+                      : `+${myItem.attack_bonus || 0} ${ICON_ATK}, +${myItem.defense_bonus || 0} ${ICON_DEF}`}
                 </span>
                 <button
                   type="button"
@@ -653,7 +653,7 @@ export default function GameScreen() {
                           ? `+${item.hp_on_purchase} HP (consumable)`
                           : item.damage_reduction
                             ? `-${item.damage_reduction} dmg taken`
-                            : `+${item.attack_bonus || 0} atk, +${item.defense_bonus || 0} def`}
+                            : `+${item.attack_bonus || 0} ${ICON_ATK}, +${item.defense_bonus || 0} ${ICON_DEF}`}
                       </p>
                       <p className="item-cost">{item.cost} pts</p>
                       <button
@@ -774,12 +774,12 @@ export default function GameScreen() {
                           <div className="history-round-header">Round {round}</div>
                           {made.length > 0 && (
                             <div className="history-detail">
-                              Attacked: {made.map((a) => `${getName(a.target_session_id)} (Atk ${a.attack_points_used})`).join(', ')}
+                              Attacked: {made.map((a) => `${getName(a.target_session_id)} (${a.attack_points_used} ${ICON_ATK})`).join(', ')}
                             </div>
                           )}
                           {received.length > 0 && (
                             <div className="history-detail received">
-                              Received: {received.map((a) => `${getName(a.attacker_session_id)} (Atk ${a.attack_points_used})`).join(', ')} = {received.reduce((s, a) => s + a.attack_points_used, 0)} total atk
+                              Received: {received.map((a) => `${getName(a.attacker_session_id)} (${a.attack_points_used} ${ICON_ATK})`).join(', ')} = {received.reduce((s, a) => s + a.attack_points_used, 0)} total {ICON_ATK}
                             </div>
                           )}
                           {made.length === 0 && received.length === 0 && (

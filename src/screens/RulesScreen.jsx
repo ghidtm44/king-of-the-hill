@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { ICON_ATK, ICON_DEF } from '../lib/gameLogic'
 import './RulesScreen.css'
 
 export default function RulesScreen() {
@@ -22,9 +23,9 @@ export default function RulesScreen() {
           <p><strong>Health (HP)</strong> — Start at 15. If HP hits 0, you're eliminated.</p>
           <p><strong>Class</strong></p>
           <ul>
-            <li>Attacker: 3 Attack, 1 Defense</li>
-            <li>Balanced: 2 Attack, 2 Defense</li>
-            <li>Defender: 1 Attack, 3 Defense</li>
+            <li>Attacker: 3 {ICON_ATK}, 1 {ICON_DEF}</li>
+            <li>Balanced: 2 {ICON_ATK}, 2 {ICON_DEF}</li>
+            <li>Defender: 1 {ICON_ATK}, 3 {ICON_DEF}</li>
           </ul>
         </section>
 
@@ -57,8 +58,8 @@ export default function RulesScreen() {
           <h2>ITEMS</h2>
           <p>Hold 1 item at a time. Buying a new one replaces the old.</p>
           <ul>
-            <li><strong>Sword:</strong> +1 Attack (4 pts)</li>
-            <li><strong>Shield:</strong> +1 Defense (4 pts)</li>
+            <li><strong>Sword:</strong> +1 {ICON_ATK} (4 pts)</li>
+            <li><strong>Shield:</strong> +1 {ICON_DEF} (4 pts)</li>
             <li><strong>Armor:</strong> Reduce incoming damage by 1 (6 pts)</li>
             <li><strong>Potion:</strong> Restore 5 HP (5 pts)</li>
           </ul>

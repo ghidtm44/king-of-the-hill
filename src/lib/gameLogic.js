@@ -1,4 +1,7 @@
 // Game constants
+export const ICON_ATK = '🗡'
+export const ICON_DEF = '🛡'
+
 export const CLASSES = {
   attacker: { attack: 3, defense: 1, label: 'Attacker' },
   defender: { attack: 1, defense: 3, label: 'Defender' },

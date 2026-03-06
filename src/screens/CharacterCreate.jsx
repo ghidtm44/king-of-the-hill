@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { CLASSES, COLORS, generateSessionId, MAX_NAME_LENGTH } from '../lib/gameLogic'
+import { CLASSES, COLORS, generateSessionId, MAX_NAME_LENGTH, ICON_ATK, ICON_DEF } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
 import './CharacterCreate.css'
 
@@ -135,7 +135,7 @@ export default function CharacterCreate() {
               <p><strong>Combat:</strong> Your attack + others' attacks add up. If total exceeds their defense, they take damage (max 5 per round).</p>
               <p><strong>Bounty:</strong> The player with the most points is the Bounty (🎯). Hitting them gives +2 pts if they take damage—but if they block, you lose 1 HP.</p>
               <p><strong>Points:</strong> +1 for surviving each round. +1 for dealing damage (+2 if it's the Bounty).</p>
-              <p><strong>Items:</strong> Buy Sword (atk), Shield (def), Armor (reduce damage), or Potion (heal). Items last 3 rounds.</p>
+              <p><strong>Items:</strong> Buy Sword ({ICON_ATK}), Shield ({ICON_DEF}), Armor (reduce damage), or Potion (heal). Items last 3 rounds.</p>
             </div>
             <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
           </div>
@@ -169,7 +169,7 @@ export default function CharacterCreate() {
                 onClick={() => setSelectedClass(key)}
               >
                 <span>{stats.label}</span>
-                <span className="stats">{stats.attack}/{stats.defense}</span>
+                <span className="stats" title="Attack / Defense">{stats.attack}{ICON_ATK}/{stats.defense}{ICON_DEF}</span>
               </button>
             ))}
           </div>
