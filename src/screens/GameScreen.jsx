@@ -488,7 +488,8 @@ export default function GameScreen() {
 
       <div className="game-layout">
         <aside className="player-list">
-          <h3>RANKINGS</h3>
+          <h3>RANKINGS <span className="player-count">({players.length})</span></h3>
+          <div className="player-list-scroll">
           {players.map((p, i) => {
             const pItem = items.find((it) => it.id === p.current_item_id)
             const pDefense = p.defense_points + (pItem?.defense_bonus || 0)
@@ -529,12 +530,14 @@ export default function GameScreen() {
                 <PixelKnight color={p.color} size="small" />
                 <div className="player-info">
                   <span className="name">{p.name}</span>
-                  <span className="class-label">{p.class_type}</span>
+                  <span className="class-label player-detail-mobile">{p.class_type}</span>
                   <span className="points">{p.total_points} pts</span>
-                  <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
-                  <span className="defense">Def: {pDefense}</span>
+                  <span className="player-detail-mobile player-detail-health">
+                    <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
+                  </span>
+                  <span className="defense player-detail-mobile">Def: {pDefense}</span>
                   {p.last_round_item_id && (
-                    <span className="last-item" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
+                    <span className="last-item player-detail-mobile" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
                       ⚔
                     </span>
                   )}
@@ -542,6 +545,12 @@ export default function GameScreen() {
               </div>
             )
           })}
+          </div>
+          {players.length > 3 && (
+            <div className="player-list-scroll-hint" aria-hidden="true">
+              ← Swipe for more ({players.length} players)
+            </div>
+          )}
         </aside>
 
         <main className="game-main">

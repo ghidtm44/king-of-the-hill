@@ -47,7 +47,7 @@ export default function CharacterCreate() {
     if (!data) {
       const { data: newRoom, error: insertErr } = await supabase
         .from('rooms')
-        .insert({ name: 'Main Arena', max_players: 10 })
+        .insert({ name: 'Main Arena', max_players: 25 })
         .select()
         .single()
       if (insertErr) {
@@ -82,7 +82,7 @@ export default function CharacterCreate() {
       setError(`Name max ${MAX_NAME_LENGTH} chars`)
       return
     }
-    if (playerCount >= 10) {
+    if (playerCount >= 25) {
       setError('Room is full')
       return
     }
@@ -144,7 +144,7 @@ export default function CharacterCreate() {
       <button className="back-btn" onClick={() => navigate('/')}>← BACK</button>
       
       <h1>CREATE WARRIOR</h1>
-      <p className="room-info">Main Arena ({playerCount}/10)</p>
+      <p className="room-info">Main Arena ({playerCount}/25)</p>
 
       <form onSubmit={handleSubmit} className="create-form">
         <div className="form-group">
@@ -196,7 +196,7 @@ export default function CharacterCreate() {
         </div>
 
         {error && <p className="error">{error}</p>}
-        <button type="submit" className="submit-btn" disabled={playerCount >= 10}>
+        <button type="submit" className="submit-btn" disabled={playerCount >= 25}>
           ENTER ARENA
         </button>
       </form>

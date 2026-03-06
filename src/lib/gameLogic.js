@@ -17,7 +17,7 @@ export const COLORS = [
 export const STARTING_POINTS = 5
 export const MAX_HEALTH = 15
 export const DAMAGE_CAP_PER_ROUND = 5
-export const MAX_PLAYERS = 10
+export const MAX_PLAYERS = 25
 export const MAX_NAME_LENGTH = 10
 
 // Round interval: 3600 = hourly (production). Use 120 for testing.

@@ -83,6 +83,27 @@
   margin-bottom: 0.75rem;
 }
 
+.player-count {
+  font-weight: normal;
+  color: var(--text-muted);
+  font-size: 0.5rem;
+}
+
+.player-list-scroll {
+  /* Wrapper for scrollable content; scroll is on .player-list */
+}
+
+.player-list-scroll-hint {
+  display: none;
+  font-size: 0.35rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.35rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border-pixel);
+  opacity: 0.9;
+}
+
 .player-row {
   display: flex;
   align-items: center;
@@ -964,8 +985,74 @@
   .player-list {
     grid-row: auto;
     width: 100%;
-    max-height: 180px;
+    max-height: none;
     order: 1;
+    overflow: visible;
+  }
+
+  .player-list-scroll {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 0;
+    margin: 0 -0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+
+  .player-list-scroll > .player-row {
+    flex: 0 0 auto;
+    min-width: 72px;
+    max-width: 72px;
+    flex-direction: column;
+    padding: 0.4rem;
+    margin-bottom: 0;
+    margin-right: 0.25rem;
+    scroll-snap-align: start;
+    text-align: center;
+  }
+
+  .player-list-scroll > .player-row .rank-cell {
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .player-list-scroll > .player-row .player-info {
+    min-width: unset;
+    align-items: center;
+  }
+
+  .player-list-scroll > .player-row .player-info .name {
+    font-size: 0.35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .player-list-scroll > .player-row .player-info .points {
+    font-size: 0.35rem;
+  }
+
+  .player-list-scroll > .player-row .player-detail-mobile {
+    display: none;
+  }
+
+  .player-list-scroll > .player-row .bounty-label-wrap {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  .player-list-scroll > .player-row .bounty-badge {
+    font-size: 0.3rem;
+    padding: 0.05rem 0.15rem;
+  }
+
+  .player-list-scroll-hint {
+    display: block;
   }
 
   .game-main {
