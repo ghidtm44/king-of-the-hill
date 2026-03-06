@@ -49,8 +49,11 @@ export default function MainScreen() {
         ))}
       </div>
 
+      <p className="footer-credit footer-credit-desktop">A game created by Todd G</p>
+
       <div className="main-content">
         <h1 className="title">WOLFPACK WARRIORS</h1>
+        <p className="footer-credit footer-credit-mobile">A game created by Todd G</p>
         <p className="subtitle">Battle Arena</p>
         
         <div className="menu-buttons">
@@ -69,7 +72,6 @@ export default function MainScreen() {
             HALL OF FAME
           </button>
         </div>
-        <p className="footer-credit">A game created by Todd G</p>
       </div>
     </div>
   )
