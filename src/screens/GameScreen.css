@@ -24,15 +24,6 @@
   gap: 0.5rem;
 }
 
-.scavenge-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-right: 1rem;
-  padding-right: 1rem;
-  border-right: 2px solid var(--border-pixel);
-}
-
 /* Actions card - container, card styling only on mobile */
 .actions-card {
   display: flex;
@@ -58,20 +49,6 @@
   margin-left: 0.5rem;
   padding-left: 0.75rem;
   border-left: 2px solid var(--border-pixel);
-}
-
-.scavenge-block {
-  display: flex;
-  align-items: center;
-  margin-right: 1rem;
-  padding-right: 1rem;
-  border-right: 2px solid var(--border-pixel);
-}
-
-.scavenge-block .action-row {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
 }
 
 .action-hint {
@@ -961,6 +938,65 @@
   cursor: not-allowed;
 }
 
+/* Scavenge section - above round recap and item store */
+.scavenge-section {
+  grid-column: 1 / -1;
+  background: var(--bg-medium);
+  border: 4px solid var(--border-pixel);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.scavenge-section-title {
+  font-size: 0.55rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.scavenge-section-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.scavenge-section-content .scavenge-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.4rem;
+}
+
+.scavenge-hint {
+  font-size: 0.35rem;
+  color: var(--text-muted);
+}
+
+.scavenge-result-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.scavenge-result-inline .scavenge-icon {
+  font-size: 1rem;
+}
+
+.scavenge-result-inline .scavenge-result-msg {
+  margin: 0;
+  font-size: 0.4rem;
+  flex: 1 1 auto;
+}
+
+.scavenge-result-inline .scavenge-result-detail {
+  margin: 0;
+  font-size: 0.38rem;
+  color: var(--accent-gold);
+}
+
+.scavenge-result-inline .scavenge-result-detail.scavenge-negative {
+  color: var(--accent-red);
+}
+
 /* Bottom app drawers - Recap and Store */
 .bottom-drawers {
   grid-column: 1 / -1;
@@ -1432,19 +1468,6 @@
     display: block;
   }
 
-  .game-header .scavenge-block {
-    margin-right: 0;
-    padding-right: 0;
-    border-right: none;
-    width: 100%;
-  }
-
-  .game-header .scavenge-block .action-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.35rem;
-  }
-
   .game-header .action-hint {
     display: block;
     max-width: none;
@@ -1498,7 +1521,7 @@
     min-height: 44px;
   }
 
-  .game-header .scavenge-btn {
+  .scavenge-section .scavenge-btn {
     min-height: 44px;
     font-size: 0.4rem;
     padding: 0.5rem 0.75rem;
@@ -1515,7 +1538,11 @@
 
   .game-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .scavenge-section {
+    order: 3;
   }
 
   .player-list {
@@ -1622,7 +1649,7 @@
   }
 
   .bottom-drawers {
-    order: 3;
+    order: 4;
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
   }

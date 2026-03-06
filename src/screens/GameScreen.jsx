@@ -615,28 +615,6 @@ export default function GameScreen() {
         <div className="header-actions">
           <div className="actions-card">
             <h3 className="actions-card-title">Actions</h3>
-            <div className="scavenge-block">
-              <div className="action-row">
-                <button
-                  type="button"
-                  className={`scavenge-btn ${scavengeUsedThisRound ? 'used' : ''}`}
-                  onClick={() => {
-                    if (scavengeUsedThisRound && lastScavengeResultThisRound) {
-                      setScavengeResult(lastScavengeResultThisRound)
-                    } else {
-                      handleScavenge()
-                    }
-                  }}
-                  disabled={me?.is_eliminated}
-                  title={scavengeUsedThisRound && lastScavengeResultThisRound
-                    ? `Already scavenged this round: ${lastScavengeResultThisRound.msg}`
-                    : 'Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP'}
-                >
-                  🔍 Scavenge
-                </button>
-                <span className="action-hint">Once per round. Chance for +pts or -HP</span>
-              </div>
-            </div>
             <div className="stance-section">
               <span className="stance-title" title="Your combat stance for this round">Stance</span>
               <div className="stance-wrap">
@@ -845,6 +823,34 @@ export default function GameScreen() {
             </div>
           )}
         </main>
+
+        <section className="scavenge-section">
+          <h3 className="scavenge-section-title">🔍 SCAVENGE</h3>
+          {!scavengeUsedThisRound ? (
+            <div className="scavenge-section-content">
+              <button
+                type="button"
+                className="scavenge-btn"
+                onClick={handleScavenge}
+                disabled={me?.is_eliminated}
+                title="Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP"
+              >
+                🔍 Scavenge
+              </button>
+              <span className="scavenge-hint">Once per round. Chance for +pts or -HP</span>
+            </div>
+          ) : lastScavengeResultThisRound ? (
+            <div className={`scavenge-result-inline scavenge-${lastScavengeResultThisRound.result}`}>
+              {lastScavengeResultThisRound.result === 'coins' && <span className="scavenge-icon">🪙</span>}
+              {lastScavengeResultThisRound.result === 'treasure' && <span className="scavenge-icon">💎</span>}
+              {lastScavengeResultThisRound.result === 'nothing' && <span className="scavenge-icon">🔍</span>}
+              {lastScavengeResultThisRound.result === 'ambushed' && <span className="scavenge-icon">⚔️</span>}
+              <p className="scavenge-result-msg">{lastScavengeResultThisRound.msg}</p>
+              {lastScavengeResultThisRound.pointsGain > 0 && <p className="scavenge-result-detail">+{lastScavengeResultThisRound.pointsGain} point{lastScavengeResultThisRound.pointsGain > 1 ? 's' : ''}</p>}
+              {lastScavengeResultThisRound.hpChange < 0 && <p className="scavenge-result-detail scavenge-negative">{lastScavengeResultThisRound.hpChange} HP</p>}
+            </div>
+          ) : null}
+        </section>
 
         <div className="bottom-drawers">
           <div className={`app-drawer recap-drawer ${recapDrawerOpen ? 'open' : ''}`}>
