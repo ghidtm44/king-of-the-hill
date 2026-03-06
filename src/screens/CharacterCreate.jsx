@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { CLASSES, COLORS, generateSessionId, MAX_NAME_LENGTH, ICON_ATK, ICON_DEF } from '../lib/gameLogic'
+import { CLASSES, COLORS, generateSessionId, generateRecoveryCode, MAX_NAME_LENGTH, ICON_ATK, ICON_DEF } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
 import './CharacterCreate.css'
 
@@ -109,6 +109,7 @@ export default function CharacterCreate() {
     }
 
     const classStats = CLASSES[selectedClass]
+    const recoveryCode = generateRecoveryCode()
     const { data: insertedPlayer, error: insertError } = await supabase
       .from('players')
       .insert({
@@ -122,6 +123,7 @@ export default function CharacterCreate() {
         total_points: 5,
         health_points: 15,
         is_eliminated: false,
+        recovery_code: recoveryCode,
       })
       .select('id')
       .single()

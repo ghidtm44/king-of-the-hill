@@ -126,7 +126,73 @@
 .subtitle {
   font-size: 0.6rem;
   color: var(--text-muted);
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.load-code-section {
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.load-code-label {
+  font-size: 0.4rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.load-code-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-code-input {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-light);
+  border: 2px solid var(--border-pixel);
+  color: var(--text-primary);
+  width: 7rem;
+  text-align: center;
+  letter-spacing: 0.2em;
+}
+
+.load-code-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.35rem;
+}
+
+.load-code-btn {
+  min-width: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.5rem;
+}
+
+.load-code-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(196, 30, 58, 0.2);
+  border: 2px solid var(--accent-red);
+  color: var(--accent-red);
+  font-size: 0.35rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.load-code-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .menu-buttons {

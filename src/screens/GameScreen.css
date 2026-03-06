@@ -272,6 +272,26 @@
   color: var(--accent-gold);
 }
 
+.recovery-code-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(230, 184, 0, 0.15);
+  border: 2px solid var(--accent-gold);
+  font-size: 0.4rem;
+}
+
+.recovery-code-label {
+  color: var(--text-muted);
+}
+
+.recovery-code-value {
+  font-weight: bold;
+  color: var(--accent-gold);
+  letter-spacing: 0.15em;
+}
+
 .timer {
   font-size: 0.6rem;
   color: var(--accent-gold);

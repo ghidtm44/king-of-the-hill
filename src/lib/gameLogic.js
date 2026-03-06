@@ -110,3 +110,13 @@ export function getTimeUntilNextHour() {
 export function generateSessionId() {
   return 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
 }
+
+/** Generate a 5-char recovery code (A-Z excluding I,O,L + 2-9) for device swap */
+export function generateRecoveryCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 5; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return code
+}

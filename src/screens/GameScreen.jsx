@@ -603,6 +603,12 @@ export default function GameScreen() {
       <div className="game-header">
         <button className="back-btn" onClick={() => navigate('/')}>← EXIT</button>
         <Link to="/rules" state={{ from: 'game' }} className="rules-link" title="View rules">📖 Rules</Link>
+        {me?.recovery_code && (
+          <div className="recovery-code-badge" title="Use this code on another device to load your character">
+            <span className="recovery-code-label">Device code:</span>
+            <span className="recovery-code-value">{me.recovery_code}</span>
+          </div>
+        )}
         <div className="timer">
           Next round: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
         </div>

@@ -7,7 +7,42 @@ import './MainScreen.css'
 export default function MainScreen() {
   const navigate = useNavigate()
   const [hasActiveGame, setHasActiveGame] = useState(false)
+  const [loadCode, setLoadCode] = useState('')
+  const [loadError, setLoadError] = useState(null)
+  const [loadingCode, setLoadingCode] = useState(false)
   const crowdColors = ['#c41e3a', '#1e3a8a', '#2d6a4f', '#e6b800']
+
+  async function handleLoadByCode(e) {
+    e?.preventDefault()
+    const code = loadCode.trim().toUpperCase()
+    if (!code || code.length !== 5) {
+      setLoadError('Enter a 5-character code')
+      return
+    }
+    setLoadingCode(true)
+    setLoadError(null)
+    const { data, error } = await supabase
+      .from('players')
+      .select('room_id, session_id, is_eliminated')
+      .eq('recovery_code', code)
+      .maybeSingle()
+    setLoadingCode(false)
+    if (error) {
+      setLoadError('Could not look up code. Try again.')
+      return
+    }
+    if (!data) {
+      setLoadError('Invalid or expired code. The code may be wrong, or the game may have reset.')
+      return
+    }
+    if (data.is_eliminated) {
+      setLoadError('This character was eliminated. The code is no longer valid.')
+      return
+    }
+    localStorage.setItem('koth_room_id', data.room_id)
+    localStorage.setItem('koth_session_id', data.session_id)
+    window.location.href = '/game'
+  }
 
   useEffect(() => {
     const sessionId = localStorage.getItem('koth_session_id')
@@ -56,6 +91,31 @@ export default function MainScreen() {
         <p className="footer-credit footer-credit-mobile">A game created by Todd G</p>
         <p className="subtitle">Battle Arena</p>
         
+        <div className="load-code-section">
+          <p className="load-code-label">Load character on this device</p>
+          <form onSubmit={handleLoadByCode} className="load-code-form">
+            <input
+              type="text"
+              value={loadCode}
+              onChange={(e) => setLoadCode(e.target.value.slice(0, 5).toUpperCase())}
+              placeholder="Enter 5-char code"
+              maxLength={5}
+              className="load-code-input"
+              disabled={loadingCode}
+              autoComplete="off"
+            />
+            <button type="submit" className="menu-btn load-code-btn" disabled={loadingCode}>
+              {loadingCode ? '...' : 'LOAD'}
+            </button>
+          </form>
+          {loadError && (
+            <div className="load-code-error" role="alert">
+              {loadError}
+              <button type="button" className="load-code-dismiss" onClick={() => setLoadError(null)} aria-label="Dismiss">×</button>
+            </div>
+          )}
+        </div>
+
         <div className="menu-buttons">
           {hasActiveGame && (
             <button className="menu-btn back-to-game" onClick={() => navigate('/game')}>
