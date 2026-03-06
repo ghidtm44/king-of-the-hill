@@ -15,8 +15,6 @@ export default function RecapFlowVisual({ attacks, players, sessionId, roundInde
     .map(([tid, arr]) => ({ sessionId: tid, totalAttack: arr.reduce((s, a) => s + a.attack_points_used, 0), count: arr.length }))
     .sort((a, b) => b.totalAttack - a.totalAttack)
 
-  const maxAttack = Math.max(1, ...targetOrder.map((t) => t.totalAttack))
-
   return (
     <div className={`recap-flow ${compact ? 'compact' : ''}`}>
       {!compact && <h4 className="recap-flow-title">Round {roundIndex} — Attack flow</h4>}
@@ -27,7 +25,6 @@ export default function RecapFlowVisual({ attacks, players, sessionId, roundInde
           {targetOrder.map(({ sessionId: targetSid, totalAttack, count }) => {
             const targetAttacks = byTarget[targetSid]
             const targetPlayer = getPlayer(targetSid)
-            const barWidth = Math.max(20, (totalAttack / maxAttack) * 100)
             const isMe = targetSid === sessionId
 
             return (
@@ -42,14 +39,7 @@ export default function RecapFlowVisual({ attacks, players, sessionId, roundInde
                           <PixelKnight color={attacker?.color || '#888'} size="small" />
                           <span className={atkIsMe ? 'you-label' : ''}>{getName(a.attacker_session_id)}{atkIsMe ? ' (you)' : ''}</span>
                         </div>
-                        <div className="recap-flow-bar-wrap">
-                          <div
-                            className="recap-flow-bar"
-                            style={{ width: `${(a.attack_points_used / maxAttack) * 80}%` }}
-                            title={`${a.attack_points_used} attack`}
-                          />
-                          <span className="recap-flow-bar-value">{a.attack_points_used}</span>
-                        </div>
+                        <span className="recap-flow-value-badge" title="Attack value">{a.attack_points_used}</span>
                       </div>
                     )
                   })}
