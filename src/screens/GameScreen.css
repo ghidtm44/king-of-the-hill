@@ -105,9 +105,44 @@
   box-shadow: 0 0 0 2px var(--accent-red);
 }
 
-.bounty-badge {
-  font-size: 0.5rem;
+.bounty-label-wrap {
+  position: relative;
   flex-shrink: 0;
+}
+
+.bounty-badge {
+  font-size: 0.4rem;
+  font-weight: bold;
+  color: var(--accent-red);
+  padding: 0.15rem 0.3rem;
+  background: rgba(196, 30, 58, 0.2);
+  border: 1px solid var(--accent-red);
+}
+
+.bounty-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.35rem;
+  line-height: 1.4;
+  background: var(--bg-dark);
+  border: 2px solid var(--accent-gold);
+  color: var(--text-primary);
+  white-space: normal;
+  width: 180px;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.player-row.bounty:hover .bounty-tooltip,
+.bounty-label-wrap:hover .bounty-tooltip {
+  opacity: 1;
 }
 
 .player-info .class-label {
@@ -119,6 +154,25 @@
 .player-info .defense {
   font-size: 0.35rem;
   color: var(--text-muted);
+}
+
+.rank-change {
+  font-size: 0.5rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.rank-change-up {
+  color: var(--accent-green);
+}
+
+.rank-change-down {
+  color: var(--accent-red);
+}
+
+.rank-change-same {
+  color: var(--accent-gold);
 }
 
 .player-row[role="button"] {

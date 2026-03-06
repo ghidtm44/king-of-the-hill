@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
 import { checkAndEndGame } from '../lib/endGame'
 import { getCurrentHourIndex, getTimeUntilNextHour, isGameActive, MAX_HEALTH } from '../lib/gameLogic'
-import { generateRoundRecap, generateGameRecap } from '../lib/roundSummary'
 import PixelKnight from '../components/PixelKnight'
 import HealthBar from '../components/HealthBar'
 import './GameScreen.css'
@@ -28,8 +27,6 @@ export default function GameScreen() {
   const [playerRoundHistory, setPlayerRoundHistory] = useState(null)
   const [recapModal, setRecapModal] = useState(null)
   const [recapText, setRecapText] = useState('')
-  const [recapLoading, setRecapLoading] = useState(false)
-  const [recapError, setRecapError] = useState('')
   const [showRulesPopup, setShowRulesPopup] = useState(false)
   const hasUnsavedAttackChanges = useRef(false)
 
@@ -117,6 +114,26 @@ export default function GameScreen() {
     hasUnsavedAttackChanges.current = false
   }, [hourIndex])
 
+  function buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, roundIndex) {
+    const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
+    const lines = []
+
+    lines.push(`1. Who you attacked: ${(myAttacks || []).length === 0 ? 'No one' : (myAttacks || []).map((a) => getName(a.target_session_id)).join(', ')}`)
+    lines.push(`2. Who attacked you: ${(attacksOnMe || []).length === 0 ? 'No one' : (attacksOnMe || []).map((a) => getName(a.attacker_session_id)).join(', ')}`)
+
+    const targetCounts = {}
+    ;(allRoundAttacks || []).forEach((a) => {
+      targetCounts[a.target_session_id] = (targetCounts[a.target_session_id] || 0) + 1
+    })
+    const sorted = Object.entries(targetCounts).sort((a, b) => b[1] - a[1])
+    const mostAttacked = sorted[0] ? getName(sorted[0][0]) : null
+    const leastAttacked = sorted.length > 0 ? getName(sorted[sorted.length - 1][0]) : null
+    lines.push(`3. Most attacked: ${mostAttacked || 'No one'}`)
+    lines.push(`4. Least attacked: ${leastAttacked || 'No one'}`)
+
+    return lines.join('\n')
+  }
+
   useEffect(() => {
     if (!me || !roundResults.length || me.is_eliminated) return
     const lastRound = roundResults[0]
@@ -124,36 +141,26 @@ export default function GameScreen() {
     if (lastRound.hour_index > lastSeen) {
       localStorage.setItem('koth_last_recap_round', String(lastRound.hour_index))
       setRecapModal('last_round')
-      setRecapLoading(true)
-      setRecapError('')
+      setRecapText('Loading...')
       ;(async () => {
-        try {
-          const { data: myAttacks } = await supabase
-            .from('attack_allocations')
-            .select('*')
-            .eq('room_id', roomId)
-            .eq('attacker_session_id', sessionId)
-            .eq('hour_index', lastRound.hour_index)
-          const { data: attacksOnMe } = await supabase
-            .from('attack_allocations')
-            .select('*')
-            .eq('room_id', roomId)
-            .eq('target_session_id', sessionId)
-            .eq('hour_index', lastRound.hour_index)
-          const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
-          const roundData = {
-            round: lastRound.hour_index,
-            roundLog: lastRound.result_text,
-            attacksMade: (myAttacks || []).map((a) => ({ target: getName(a.target_session_id), attack: a.attack_points_used })),
-            attacksReceived: (attacksOnMe || []).map((a) => ({ attacker: getName(a.attacker_session_id), attack: a.attack_points_used })),
-          }
-          const recap = await generateRoundRecap(me.name, roundData)
-          setRecapText(recap)
-        } catch (err) {
-          setRecapError(err.message || 'Failed to generate recap')
-        } finally {
-          setRecapLoading(false)
-        }
+        const { data: myAttacks } = await supabase
+          .from('attack_allocations')
+          .select('*')
+          .eq('room_id', roomId)
+          .eq('attacker_session_id', sessionId)
+          .eq('hour_index', lastRound.hour_index)
+        const { data: attacksOnMe } = await supabase
+          .from('attack_allocations')
+          .select('*')
+          .eq('room_id', roomId)
+          .eq('target_session_id', sessionId)
+          .eq('hour_index', lastRound.hour_index)
+        const { data: allRoundAttacks } = await supabase
+          .from('attack_allocations')
+          .select('*')
+          .eq('room_id', roomId)
+          .eq('hour_index', lastRound.hour_index)
+        setRecapText(buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, lastRound.hour_index))
       })()
     }
   }, [me?.id, roundResults, players, roomId, sessionId])
@@ -161,76 +168,51 @@ export default function GameScreen() {
   async function showLastRoundRecap() {
     if (!me || !roundResults.length) return
     setRecapModal('last_round')
-    setRecapLoading(true)
-    setRecapError('')
-    try {
-      const lastRound = roundResults[0]
-      const { data: myAttacks } = await supabase
-        .from('attack_allocations')
-        .select('*')
-        .eq('room_id', roomId)
-        .eq('attacker_session_id', sessionId)
-        .eq('hour_index', lastRound.hour_index)
-      const { data: attacksOnMe } = await supabase
-        .from('attack_allocations')
-        .select('*')
-        .eq('room_id', roomId)
-        .eq('target_session_id', sessionId)
-        .eq('hour_index', lastRound.hour_index)
-      const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
-      const roundData = {
-        round: lastRound.hour_index,
-        roundLog: lastRound.result_text,
-        attacksMade: (myAttacks || []).map((a) => ({ target: getName(a.target_session_id), attack: a.attack_points_used })),
-        attacksReceived: (attacksOnMe || []).map((a) => ({ attacker: getName(a.attacker_session_id), attack: a.attack_points_used })),
-      }
-      const recap = await generateRoundRecap(me.name, roundData)
-      setRecapText(recap)
-    } catch (err) {
-      setRecapError(err.message || 'Failed to generate recap')
-    } finally {
-      setRecapLoading(false)
-    }
+    setRecapText('Loading...')
+    const lastRound = roundResults[0]
+    const { data: myAttacks } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('attacker_session_id', sessionId)
+      .eq('hour_index', lastRound.hour_index)
+    const { data: attacksOnMe } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('target_session_id', sessionId)
+      .eq('hour_index', lastRound.hour_index)
+    const { data: allRoundAttacks } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('hour_index', lastRound.hour_index)
+    setRecapText(buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, lastRound.hour_index))
   }
 
   async function showFullGameRecap() {
-    if (!me || !players.length) return
+    if (!me || !roundResults.length) return
     setRecapModal('full_game')
-    setRecapLoading(true)
-    setRecapError('')
-    try {
-      const { data: allResults } = await supabase
-        .from('round_results')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('hour_index', { ascending: true })
-      const { data: myAttacks } = await supabase
-        .from('attack_allocations')
-        .select('*')
-        .eq('room_id', roomId)
-        .eq('attacker_session_id', sessionId)
-        .order('hour_index', { ascending: true })
-      const { data: attacksOnMe } = await supabase
-        .from('attack_allocations')
-        .select('*')
-        .eq('room_id', roomId)
-        .eq('target_session_id', sessionId)
-        .order('hour_index', { ascending: true })
-      const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
-      const gameData = {
-        rounds: (allResults || []).map((r) => ({ round: r.hour_index, log: r.result_text })),
-        myAttacks: (myAttacks || []).map((a) => ({ round: a.hour_index, target: getName(a.target_session_id), attack: a.attack_points_used })),
-        attacksReceived: (attacksOnMe || []).map((a) => ({ round: a.hour_index, attacker: getName(a.attacker_session_id), attack: a.attack_points_used })),
-        currentScore: me.total_points,
-        currentHP: me.health_points,
-      }
-      const recap = await generateGameRecap(me.name, gameData)
-      setRecapText(recap)
-    } catch (err) {
-      setRecapError(err.message || 'Failed to generate recap')
-    } finally {
-      setRecapLoading(false)
-    }
+    setRecapText('Loading...')
+    const lastRound = roundResults[0]
+    const { data: myAttacks } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('attacker_session_id', sessionId)
+      .eq('hour_index', lastRound.hour_index)
+    const { data: attacksOnMe } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('target_session_id', sessionId)
+      .eq('hour_index', lastRound.hour_index)
+    const { data: allRoundAttacks } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('hour_index', lastRound.hour_index)
+    setRecapText(buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, lastRound.hour_index))
   }
 
   useEffect(() => {
@@ -420,8 +402,8 @@ export default function GameScreen() {
         <button
           className="recap-btn"
           onClick={showFullGameRecap}
-          disabled={recapLoading || me.is_eliminated}
-          title="Generate whimsical recap of entire game"
+          disabled={me.is_eliminated}
+          title="View round recap"
         >
           📜 ROUND RECAP
         </button>
@@ -441,6 +423,9 @@ export default function GameScreen() {
             const pItem = items.find((it) => it.id === p.current_item_id)
             const pDefense = p.defense_points + (pItem?.defense_bonus || 0)
             const isBounty = p.session_id === bountySessionId
+            const currentRank = i + 1
+            const prevRank = p.previous_round_rank
+            const rankChange = prevRank == null ? 'same' : currentRank < prevRank ? 'up' : currentRank > prevRank ? 'down' : 'same'
             return (
               <div
                 key={p.id}
@@ -450,8 +435,18 @@ export default function GameScreen() {
                 onClick={() => setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPlayer(selectedPlayer?.id === p.id ? null : p)}
               >
-                <span className="rank">#{i + 1}</span>
-                {isBounty && <span className="bounty-badge" title="Bounty Target">🎯</span>}
+                <span className="rank">#{currentRank}</span>
+                <span className={`rank-change rank-change-${rankChange}`} title={rankChange === 'up' ? 'Moved up' : rankChange === 'down' ? 'Moved down' : 'No change'}>
+                  {rankChange === 'up' ? '▲' : rankChange === 'down' ? '▼' : '−'}
+                </span>
+                {isBounty && (
+                  <span className="bounty-label-wrap">
+                    <span className="bounty-badge">🎯 BOUNTY</span>
+                    <span className="bounty-tooltip">
+                      The Bounty is the player with the most points. Attack them and deal damage to earn +2 pts. If they block (take 0 damage), you lose 1 HP.
+                    </span>
+                  </span>
+                )}
                 <PixelKnight color={p.color} size="small" />
                 <div className="player-info">
                   <span className="name">{p.name}</span>
@@ -619,13 +614,7 @@ export default function GameScreen() {
               <button className="close-btn" onClick={() => setRecapModal(null)} aria-label="Close">×</button>
             </div>
             <div className="recap-body">
-              {recapLoading ? (
-                <p>Generating recap...</p>
-              ) : recapError ? (
-                <p className="recap-error">{recapError}</p>
-              ) : (
-                <p className="recap-text">{recapText}</p>
-              )}
+              <pre className="recap-text">{recapText}</pre>
             </div>
           </div>
         </div>

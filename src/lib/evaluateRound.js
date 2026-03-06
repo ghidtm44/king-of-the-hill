@@ -208,6 +208,13 @@ export async function evaluateRound(roomId, hourIndex) {
     })
   }
 
+  // Current ranking (before this round) = end of previous round
+  const sortedByPoints = [...allPlayers].sort((a, b) => b.total_points - a.total_points)
+  const previousRankBySession = {}
+  sortedByPoints.forEach((p, idx) => {
+    previousRankBySession[p.session_id] = idx + 1
+  })
+
   // Apply updates to players
   const updates = []
   for (const p of allPlayers) {
@@ -226,6 +233,7 @@ export async function evaluateRound(roomId, hourIndex) {
       health_points: newHealth,
       is_eliminated: isEliminated,
       last_round_item_id: p.current_item_id,
+      previous_round_rank: previousRankBySession[p.session_id],
     })
   }
 
