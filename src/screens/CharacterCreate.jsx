@@ -21,7 +21,7 @@ export default function CharacterCreate() {
   }, [])
 
   useEffect(() => {
-    if (!loading && !localStorage.getItem('koth_rules_seen')) {
+    if (!loading) {
       setShowRulesPopup(true)
     }
   }, [loading])
