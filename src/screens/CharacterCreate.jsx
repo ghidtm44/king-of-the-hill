@@ -136,7 +136,7 @@ export default function CharacterCreate() {
               <p>The game resets every day at 12:00 PM EST, so each round is a fresh chance to claim Victory.</p>
               <p>Pick your class, choose your targets carefully, survive the chaos, and try to end the day on top.</p>
             </div>
-            <button className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
+            <button type="button" className="rules-popup-btn" onClick={dismissRulesPopup}>Got it</button>
           </div>
         </div>
       )}

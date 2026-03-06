@@ -187,12 +187,21 @@ export default function GameScreen() {
 
     // Game reset / character no longer exists: clear persisted data and redirect to create
     if (!mePlayer && roomId && sessionId) {
+      // Retry once after short delay - newly created character may not be visible yet (race condition)
+      const retryKey = `koth_retry_${roomId}_${sessionId}`
+      const hasRetried = sessionStorage.getItem(retryKey)
+      if (!hasRetried) {
+        sessionStorage.setItem(retryKey, '1')
+        setTimeout(() => loadData(), 600)
+        return
+      }
+      sessionStorage.removeItem(retryKey)
       localStorage.removeItem('koth_room_id')
       localStorage.removeItem('koth_session_id')
       navigate('/create', { replace: true })
       return
     }
-
+    sessionStorage.removeItem(`koth_retry_${roomId}_${sessionId}`)
     setLoading(false)
   }, [roomId, sessionId, navigate])
 
