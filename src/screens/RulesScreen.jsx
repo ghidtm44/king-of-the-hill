@@ -55,6 +55,9 @@ export default function RulesScreen() {
           <ul>
             <li>+1 for surviving each round</li>
             <li>+1 for dealing damage (+2 if Bounty)</li>
+            <li>−1 if you take any HP damage in a round</li>
+            <li>+1 if you're attacked but block (take 0 damage)</li>
+            <li>−1 if you attack but deal 0 damage (target blocked)</li>
             <li>Spend points on items</li>
           </ul>
         </section>

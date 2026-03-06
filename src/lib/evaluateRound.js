@@ -108,6 +108,7 @@ export async function evaluateRound(roomId, hourIndex) {
 
     if (damage > 0) {
       roundLog.push(`${target.name} loses ${damage} HP (Total Attack: ${totalAttack}, Defense: ${target.effectiveDefense})`)
+      scoreGains[targetSessionId] = (scoreGains[targetSessionId] || 0) - 1
       const rewardPerAttacker = isBounty ? 2 : 1
       attackerList.forEach((a) => {
         scoreGains[a.sessionId] = (scoreGains[a.sessionId] || 0) + rewardPerAttacker
@@ -117,6 +118,10 @@ export async function evaluateRound(roomId, hourIndex) {
       }
     } else if (totalAttack > 0) {
       roundLog.push(`${target.name} blocked (Total Attack: ${totalAttack}, Defense: ${target.effectiveDefense})`)
+      scoreGains[targetSessionId] = (scoreGains[targetSessionId] || 0) + 1
+      attackerList.forEach((a) => {
+        scoreGains[a.sessionId] = (scoreGains[a.sessionId] || 0) - 1
+      })
       if (isBounty) {
         attackerList.forEach((a) => bountyCounterattackVictims.push(a.sessionId))
       }
@@ -169,9 +174,12 @@ export async function evaluateRound(roomId, hourIndex) {
     resultBlocks.push(`Damage: ${dmg}`)
     if (dmg > 0) {
       resultBlocks.push(`${target.name} loses ${dmg} HP`)
+      resultBlocks.push(`${target.name} loses 1 Point (took damage)`)
       resultBlocks.push(`Attackers gain +${isBounty ? 2 : 1} Points${isBounty ? ' (bounty reward)' : ''}`)
-    } else if (totalAttack > 0 && isBounty) {
-      resultBlocks.push('Bounty counterattack: attackers lose 1 HP each')
+    } else if (totalAttack > 0) {
+      resultBlocks.push(`${target.name} gains +1 Point (blocked)`)
+      resultBlocks.push('Attackers lose 1 Point each (dealt 0 damage)')
+      if (isBounty) resultBlocks.push('Bounty counterattack: attackers lose 1 HP each')
     }
     resultBlocks.push('')
   }
