@@ -36,7 +36,7 @@ export default function GameScreen() {
   const [lastRoundSameTargetAttackers, setLastRoundSameTargetAttackers] = useState(new Set())
   const [scavengeUsedThisRound, setScavengeUsedThisRound] = useState(false)
   const [currentStance, setCurrentStance] = useState(null)
-  const [scavengeFeedback, setScavengeFeedback] = useState(null)
+  const [scavengeResult, setScavengeResult] = useState(null)
   const [pendingPurchase, setPendingPurchase] = useState(null)
   const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
   const bountyBadgeRef = useRef(null)
@@ -414,7 +414,7 @@ export default function GameScreen() {
 
   async function handleScavenge() {
     if (!me || me.is_eliminated || scavengeUsedThisRound || !roomId || !sessionId) return
-    setScavengeFeedback(null)
+    setScavengeResult(null)
     const roll = Math.random()
     let result, pointsGain, hpChange
     if (roll < 0.4) {
@@ -450,8 +450,8 @@ export default function GameScreen() {
     await supabase.from('players').update({ total_points: newPoints, health_points: newHp }).eq('id', me.id)
     setScavengeUsedThisRound(true)
     const msg = result === 'coins' ? '+1 Point!' : result === 'treasure' ? '+3 Points!' : result === 'ambushed' ? '-1 HP' : 'Nothing found'
-    setScavengeFeedback(msg)
-    setTimeout(() => setScavengeFeedback(null), 2500)
+    setScavengeResult({ result, pointsGain, hpChange, msg })
+    setTimeout(() => setScavengeResult(null), 3500)
     loadData()
   }
 
@@ -599,7 +599,6 @@ export default function GameScreen() {
             >
               🔍 Scavenge
             </button>
-            {scavengeFeedback && <span className="scavenge-feedback">{scavengeFeedback}</span>}
           </div>
           <div className="stance-wrap">
             <button
@@ -887,6 +886,24 @@ export default function GameScreen() {
           document.body
         )
       })()}
+
+      {scavengeResult && (
+        <div className="scavenge-result-overlay" onClick={() => setScavengeResult(null)}>
+          <div className="scavenge-result-popup" onClick={(e) => e.stopPropagation()}>
+            <h3>🔍 Scavenge Result</h3>
+            <div className={`scavenge-result-content scavenge-${scavengeResult.result}`}>
+              {scavengeResult.result === 'coins' && <span className="scavenge-icon">🪙</span>}
+              {scavengeResult.result === 'treasure' && <span className="scavenge-icon">💎</span>}
+              {scavengeResult.result === 'nothing' && <span className="scavenge-icon">🔍</span>}
+              {scavengeResult.result === 'ambushed' && <span className="scavenge-icon">⚔️</span>}
+              <p className="scavenge-result-msg">{scavengeResult.msg}</p>
+              {scavengeResult.pointsGain > 0 && <p className="scavenge-result-detail">+{scavengeResult.pointsGain} point{scavengeResult.pointsGain > 1 ? 's' : ''}</p>}
+              {scavengeResult.hpChange < 0 && <p className="scavenge-result-detail scavenge-negative">{scavengeResult.hpChange} HP</p>}
+            </div>
+            <button className="scavenge-result-btn" onClick={() => setScavengeResult(null)}>Got it</button>
+          </div>
+        </div>
+      )}
 
       {recapModal && (
         <div className="recap-modal" onClick={() => setRecapModal(null)}>
