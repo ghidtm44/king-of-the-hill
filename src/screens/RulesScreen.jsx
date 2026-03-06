@@ -15,6 +15,7 @@ export default function RulesScreen() {
         <section>
           <h2>GOAL</h2>
           <p>Have the most Points at the end. Stay alive by keeping HP above 0.</p>
+          <p>The game lasts 24 hours (12pm EST to 11:59am EST).</p>
         </section>
 
         <section>

@@ -259,6 +259,19 @@
   color: var(--accent-gold);
 }
 
+.game-header .rules-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.45rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.game-header .rules-link:hover {
+  color: var(--accent-gold);
+}
+
 .timer {
   font-size: 0.6rem;
   color: var(--accent-gold);
@@ -1227,13 +1240,18 @@
     font-size: 0.45rem;
   }
 
-  .game-header .timer {
+  .game-header .rules-link {
     order: 2;
+    font-size: 0.4rem;
+  }
+
+  .game-header .timer {
+    order: 3;
     font-size: 0.55rem;
   }
 
   .game-header .header-actions {
-    order: 3;
+    order: 4;
     width: 100%;
     justify-content: flex-start;
   }
