@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
 import { checkAndEndGame } from '../lib/endGame'
-import { getCurrentHourIndex, getTimeUntilNextHour, isGameActive, MAX_HEALTH } from '../lib/gameLogic'
+import { getCurrentHourIndex, getTimeUntilNextHour, shouldEndPreviousGame, MAX_HEALTH } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
 import HealthBar from '../components/HealthBar'
 import './GameScreen.css'
@@ -302,7 +302,7 @@ export default function GameScreen() {
   const [gameEnded, setGameEnded] = useState(null)
 
   useEffect(() => {
-    if (!isGameActive() && roomId) {
+    if (shouldEndPreviousGame() && roomId) {
       checkAndEndGame(roomId).then((r) => {
         if (r.winner) {
           setGameEnded(r.winner)

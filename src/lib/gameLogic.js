@@ -38,12 +38,18 @@ export function getCurrentHourIndex() {
   return { hourIndex: roundIndex, isEvaluationSecond }
 }
 
-// Game runs 12:00 PM–11:59 AM EST (24 rounds). Ends at 11:00 AM EST.
+// Game runs 12:00 PM–11:59 AM EST (24 rounds). Ends at 11:59 AM, resets at 12:00 PM.
 export function isGameActive() {
+  // Game is active for full cycle: 12pm through 11:59am (rounds 1–24)
+  return true
+}
+
+// Only true at noon EST—when we need to clean up the previous game before the new one starts.
+export function shouldEndPreviousGame() {
   const now = new Date()
   const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
   const hours = est.getHours()
-  return hours >= 12
+  return hours === 12
 }
 
 export function getTimeUntilNextHour() {
