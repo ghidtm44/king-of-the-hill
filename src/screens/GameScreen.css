@@ -52,6 +52,17 @@
   cursor: not-allowed;
 }
 
+.scavenge-btn.used:not(:disabled) {
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.scavenge-btn.used:not(:disabled):hover {
+  opacity: 1;
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
 /* Scavenge result popup */
 .scavenge-result-overlay {
   position: fixed;
@@ -137,6 +148,19 @@
   to { opacity: 1; }
 }
 
+.stance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stance-title {
+  font-size: 0.32rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .stance-wrap {
   display: flex;
   gap: 0.25rem;
@@ -212,6 +236,18 @@
 .my-stats .my-rank {
   font-weight: bold;
   color: var(--accent-gold);
+}
+
+.my-stats-atkdef .stat-mod {
+  font-size: 0.4rem;
+  color: var(--accent-gold);
+  margin-left: 0.1rem;
+}
+
+.stats-row .stat-mod {
+  font-size: 0.35rem;
+  color: var(--accent-gold);
+  margin-left: 0.05rem;
 }
 
 .game-layout {

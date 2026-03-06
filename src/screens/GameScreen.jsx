@@ -37,6 +37,7 @@ export default function GameScreen() {
   const [scavengeUsedThisRound, setScavengeUsedThisRound] = useState(false)
   const [currentStance, setCurrentStance] = useState(null)
   const [scavengeResult, setScavengeResult] = useState(null)
+  const [lastScavengeResultThisRound, setLastScavengeResultThisRound] = useState(null)
   const [pendingPurchase, setPendingPurchase] = useState(null)
   const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
   const bountyBadgeRef = useRef(null)
@@ -123,12 +124,21 @@ export default function GameScreen() {
 
     const { data: scavengeData } = await supabase
       .from('scavenge_uses')
-      .select('id')
+      .select('id, result')
       .eq('room_id', roomId)
       .eq('session_id', sessionId)
       .eq('hour_index', hi)
       .maybeSingle()
     setScavengeUsedThisRound(!!scavengeData)
+    if (scavengeData?.result) {
+      const r = scavengeData.result
+      const msg = r === 'coins' ? '+1 Point!' : r === 'treasure' ? '+3 Points!' : r === 'ambushed' ? '-1 HP' : 'Nothing found'
+      const pointsGain = r === 'coins' ? 1 : r === 'treasure' ? 3 : 0
+      const hpChange = r === 'ambushed' ? -1 : 0
+      setLastScavengeResultThisRound({ result: r, pointsGain, hpChange, msg })
+    } else {
+      setLastScavengeResultThisRound(null)
+    }
 
     const { data: stanceData } = await supabase
       .from('player_stances')
@@ -450,7 +460,9 @@ export default function GameScreen() {
     await supabase.from('players').update({ total_points: newPoints, health_points: newHp }).eq('id', me.id)
     setScavengeUsedThisRound(true)
     const msg = result === 'coins' ? '+1 Point!' : result === 'treasure' ? '+3 Points!' : result === 'ambushed' ? '-1 HP' : 'Nothing found'
-    setScavengeResult({ result, pointsGain, hpChange, msg })
+    const resultData = { result, pointsGain, hpChange, msg }
+    setLastScavengeResultThisRound(resultData)
+    setScavengeResult(resultData)
     setTimeout(() => setScavengeResult(null), 3500)
     loadData()
   }
@@ -572,8 +584,10 @@ export default function GameScreen() {
   }
 
   const myItem = items.find((i) => i.id === me.current_item_id)
-  const effectiveAttack = me.attack_points + (myItem?.attack_bonus || 0)
-  const effectiveDefense = me.defense_points + (myItem?.defense_bonus || 0)
+  const attackMod = (myItem?.attack_bonus || 0) + (currentStance === 'aggressive' ? 1 : 0)
+  const defenseMod = (myItem?.defense_bonus || 0) + (currentStance === 'defensive' ? 1 : 0)
+  const effectiveAttack = me.attack_points + attackMod
+  const effectiveDefense = me.defense_points + defenseMod
   const myRank = players.findIndex((p) => p.session_id === sessionId) + 1
   const otherPlayers = players.filter((p) => !p.is_eliminated && p.session_id !== sessionId)
   const survivors = players.filter((p) => !p.is_eliminated)
@@ -592,42 +606,53 @@ export default function GameScreen() {
           <div className="scavenge-wrap">
             <button
               type="button"
-              className="scavenge-btn"
-              onClick={handleScavenge}
-              disabled={me?.is_eliminated || scavengeUsedThisRound}
-              title="Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP"
+              className={`scavenge-btn ${scavengeUsedThisRound ? 'used' : ''}`}
+              onClick={() => {
+                if (scavengeUsedThisRound && lastScavengeResultThisRound) {
+                  setScavengeResult(lastScavengeResultThisRound)
+                } else {
+                  handleScavenge()
+                }
+              }}
+              disabled={me?.is_eliminated}
+              title={scavengeUsedThisRound && lastScavengeResultThisRound
+                ? `Already scavenged this round: ${lastScavengeResultThisRound.msg}`
+                : 'Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP'}
             >
               🔍 Scavenge
             </button>
           </div>
-          <div className="stance-wrap">
-            <button
-              type="button"
-              className={`stance-btn ${currentStance === 'aggressive' ? 'selected' : ''}`}
-              onClick={() => setStance('aggressive')}
-              disabled={me?.is_eliminated}
-              title="+1 Attack this round"
-            >
-              ⚔ Aggressive
-            </button>
-            <button
-              type="button"
-              className={`stance-btn ${currentStance === 'defensive' ? 'selected' : ''}`}
-              onClick={() => setStance('defensive')}
-              disabled={me?.is_eliminated}
-              title="+1 Defense this round"
-            >
-              🛡 Defensive
-            </button>
-            <button
-              type="button"
-              className={`stance-btn ${currentStance === 'greedy' ? 'selected' : ''}`}
-              onClick={() => setStance('greedy')}
-              disabled={me?.is_eliminated}
-              title="+1 extra point if you survive"
-            >
-              💰 Greedy
-            </button>
+          <div className="stance-section">
+            <span className="stance-title" title="Your combat stance for this round">Stance</span>
+            <div className="stance-wrap">
+              <button
+                type="button"
+                className={`stance-btn ${currentStance === 'aggressive' ? 'selected' : ''}`}
+                onClick={() => setStance('aggressive')}
+                disabled={me?.is_eliminated}
+                title="Aggressive: +1 Attack this round. Deal more damage when you attack."
+              >
+                ⚔ Aggressive
+              </button>
+              <button
+                type="button"
+                className={`stance-btn ${currentStance === 'defensive' ? 'selected' : ''}`}
+                onClick={() => setStance('defensive')}
+                disabled={me?.is_eliminated}
+                title="Defensive: +1 Defense this round. Block more incoming damage."
+              >
+                🛡 Defensive
+              </button>
+              <button
+                type="button"
+                className={`stance-btn ${currentStance === 'greedy' ? 'selected' : ''}`}
+                onClick={() => setStance('greedy')}
+                disabled={me?.is_eliminated}
+                title="Greedy: +1 extra point if you survive the round. No attack/defense bonus."
+              >
+                💰 Greedy
+              </button>
+            </div>
           </div>
         </div>
         <button
@@ -644,7 +669,11 @@ export default function GameScreen() {
           <span>{me.name}</span>
           <span>{me.total_points} pts</span>
           <HealthBar current={Math.min(me.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
-          <span title="Attack / Defense">{effectiveAttack}{ICON_ATK}/{effectiveDefense}{ICON_DEF}</span>
+          <span className="my-stats-atkdef" title={`Attack / Defense${attackMod || defenseMod ? ` (includes stance & item bonuses)` : ''}`}>
+            {effectiveAttack}{ICON_ATK}{attackMod > 0 ? <span className="stat-mod">(+{attackMod})</span> : ''}
+            {' / '}
+            {effectiveDefense}{ICON_DEF}{defenseMod > 0 ? <span className="stat-mod">(+{defenseMod})</span> : ''}
+          </span>
         </div>
       </div>
 
@@ -653,9 +682,9 @@ export default function GameScreen() {
           <h3>RANKINGS <span className="player-count">({players.length})</span></h3>
           <div className="player-list-scroll">
           {players.map((p, i) => {
-            const pItem = items.find((it) => it.id === p.current_item_id)
-            const pAttack = p.attack_points + (pItem?.attack_bonus || 0)
-            const pDefense = p.defense_points + (pItem?.defense_bonus || 0)
+            const isMe = p.session_id === sessionId
+            const pAttack = isMe ? effectiveAttack : p.attack_points
+            const pDefense = isMe ? effectiveDefense : p.defense_points
             const isBounty = p.session_id === bountySessionId
             const isTarget = selectedTargetId === p.session_id && p.session_id !== sessionId
             const currentRank = i + 1
@@ -704,7 +733,10 @@ export default function GameScreen() {
                   <span className="player-detail-mobile player-detail-health">
                     <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
                   </span>
-                  <span className="stats-row" title="Attack / Defense">{ICON_ATK}{pAttack} {ICON_DEF}{pDefense}</span>
+                  <span className="stats-row" title={isMe ? 'Your attack/defense (with modifiers)' : 'Base attack / defense'}>
+                    {ICON_ATK}{pAttack}{isMe && attackMod > 0 ? <span className="stat-mod">(+{attackMod})</span> : ''}{' '}
+                    {ICON_DEF}{pDefense}{isMe && defenseMod > 0 ? <span className="stat-mod">(+{defenseMod})</span> : ''}
+                  </span>
                   {p.last_round_item_id && (
                     <span className="last-item player-detail-mobile" title={items.find((it) => it.id === p.last_round_item_id)?.name || 'Item'}>
                       ⚔
