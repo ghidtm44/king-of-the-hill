@@ -670,9 +670,9 @@ export default function GameScreen() {
                 className="recap-btn"
                 onClick={showFullGameRecap}
                 disabled={me.is_eliminated}
-                title="View round recap"
+                title="View game recap"
               >
-                📜 ROUND RECAP
+                📜 GAME RECAP
               </button>
               <span className="action-hint">View past round results</span>
             </div>
@@ -873,9 +873,9 @@ export default function GameScreen() {
               className="drawer-header"
               onClick={() => setRecapDrawerOpen((o) => !o)}
               aria-expanded={recapDrawerOpen}
-              aria-label={recapDrawerOpen ? 'Collapse round recap' : 'Expand round recap'}
+              aria-label={recapDrawerOpen ? 'Collapse previous round results' : 'Expand previous round results'}
             >
-              <h3>ROUND RECAP</h3>
+              <h3>PREVIOUS ROUND RESULTS</h3>
               <span className="drawer-arrow" aria-hidden="true">{recapDrawerOpen ? '▼' : '▲'}</span>
             </button>
             <div className="drawer-content">
