@@ -266,8 +266,8 @@
 .footer-credit {
   margin-top: 1.25rem;
   font-size: 0.5rem;
-  color: var(--text-muted);
-  text-shadow: none;
+  color: var(--accent-gold);
+  text-shadow: 2px 2px 0 #8b6914;
 }
 
 /* Desktop: larger card, more presence */
