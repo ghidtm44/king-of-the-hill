@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import PixelKnight from '../components/PixelKnight'
 import './MainScreen.css'
 
@@ -11,7 +12,26 @@ export default function MainScreen() {
   useEffect(() => {
     const sessionId = localStorage.getItem('koth_session_id')
     const roomId = localStorage.getItem('koth_room_id')
-    setHasActiveGame(!!(sessionId && roomId))
+    if (!sessionId || !roomId) {
+      setHasActiveGame(false)
+      return
+    }
+    // Verify character still exists (game may have reset)
+    supabase
+      .from('players')
+      .select('id')
+      .eq('room_id', roomId)
+      .eq('session_id', sessionId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) {
+          localStorage.removeItem('koth_room_id')
+          localStorage.removeItem('koth_session_id')
+          setHasActiveGame(false)
+        } else {
+          setHasActiveGame(true)
+        }
+      })
   }, [])
 
   return (

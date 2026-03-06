@@ -108,6 +108,7 @@
 .bounty-label-wrap {
   position: relative;
   flex-shrink: 0;
+  cursor: help;
 }
 
 .bounty-badge {
@@ -120,30 +121,37 @@
   white-space: nowrap;
 }
 
-.bounty-tooltip {
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.35rem;
-  line-height: 1.4;
+/* Bounty tooltip - rendered via portal, floats above all content */
+.bounty-tooltip-portal {
+  position: fixed;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.38rem;
+  line-height: 1.5;
   background: var(--bg-dark);
   border: 2px solid var(--accent-gold);
   color: var(--text-primary);
   white-space: normal;
-  width: 180px;
-  z-index: 50;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  width: 200px;
+  max-width: calc(100vw - 2rem);
+  z-index: 10000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
 }
 
-.player-row.bounty:hover .bounty-tooltip,
-.bounty-label-wrap:hover .bounty-tooltip {
-  opacity: 1;
+@media (max-width: 768px) {
+  .bounty-tooltip-portal {
+    width: min(260px, calc(100vw - 1.5rem));
+    padding: 0.75rem 1rem;
+    font-size: 0.42rem;
+  }
+
+  .bounty-label-wrap {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .player-info .class-label {

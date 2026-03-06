@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
@@ -28,6 +29,10 @@ export default function GameScreen() {
   const [recapModal, setRecapModal] = useState(null)
   const [recapText, setRecapText] = useState('')
   const [showRulesPopup, setShowRulesPopup] = useState(false)
+  const [bountyTooltipOpen, setBountyTooltipOpen] = useState(false)
+  const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
+  const bountyBadgeRef = useRef(null)
+  const bountyTooltipRef = useRef(null)
   const hasUnsavedAttackChanges = useRef(false)
 
   const loadData = useCallback(async () => {
@@ -89,6 +94,14 @@ export default function GameScreen() {
       setAttacksAgainstMe([])
     }
 
+    // Game reset / character no longer exists: clear persisted data and redirect to create
+    if (!mePlayer && roomId && sessionId) {
+      localStorage.removeItem('koth_room_id')
+      localStorage.removeItem('koth_session_id')
+      navigate('/create', { replace: true })
+      return
+    }
+
     setLoading(false)
   }, [roomId, sessionId, navigate])
 
@@ -103,6 +116,49 @@ export default function GameScreen() {
     localStorage.setItem('koth_rules_seen', 'true')
     setShowRulesPopup(false)
   }
+
+  function updateBountyTooltipPosition() {
+    if (bountyBadgeRef.current) {
+      setBountyTooltipRect(bountyBadgeRef.current.getBoundingClientRect())
+    }
+  }
+
+  function handleBountyBadgeEnter() {
+    updateBountyTooltipPosition()
+    setBountyTooltipOpen(true)
+  }
+
+  function handleBountyBadgeLeave() {
+    setBountyTooltipOpen(false)
+  }
+
+  function handleBountyBadgeClick(e) {
+    e.stopPropagation()
+    if (bountyTooltipOpen) {
+      setBountyTooltipOpen(false)
+    } else {
+      updateBountyTooltipPosition()
+      setBountyTooltipOpen(true)
+    }
+  }
+
+  useEffect(() => {
+    if (!bountyTooltipOpen) return
+    function handleClickOutside(e) {
+      if (
+        bountyBadgeRef.current && !bountyBadgeRef.current.contains(e.target) &&
+        bountyTooltipRef.current && !bountyTooltipRef.current.contains(e.target)
+      ) {
+        setBountyTooltipOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [bountyTooltipOpen])
 
   useEffect(() => {
     loadData()
@@ -262,6 +318,7 @@ export default function GameScreen() {
         if (r.winner) {
           setGameEnded(r.winner)
           localStorage.removeItem('koth_room_id')
+          localStorage.removeItem('koth_session_id')
         }
       })
     }
@@ -442,11 +499,18 @@ export default function GameScreen() {
                   </span>
                 </span>
                 {isBounty && (
-                  <span className="bounty-label-wrap">
+                  <span
+                    className="bounty-label-wrap"
+                    ref={bountyBadgeRef}
+                    onMouseEnter={handleBountyBadgeEnter}
+                    onMouseLeave={handleBountyBadgeLeave}
+                    onClick={handleBountyBadgeClick}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleBountyBadgeClick(e)}
+                    aria-label="Bounty target - tap for info"
+                  >
                     <span className="bounty-badge">🎯 BOUNTY</span>
-                    <span className="bounty-tooltip">
-                      The Bounty is the player with the most points. Attack them and deal damage to earn +2 pts. If they block (take 0 damage), you lose 1 HP.
-                    </span>
                   </span>
                 )}
                 <PixelKnight color={p.color} size="small" />
@@ -590,6 +654,32 @@ export default function GameScreen() {
           )}
         </div>
       </div>
+
+      {bountyTooltipOpen && bountyTooltipRect && (() => {
+        const tooltipWidth = 200
+        const gap = 8
+        const spaceRight = window.innerWidth - bountyTooltipRect.right
+        const left = spaceRight >= tooltipWidth + gap
+          ? bountyTooltipRect.right + gap
+          : bountyTooltipRect.left - tooltipWidth - gap
+        const leftClamped = Math.max(8, Math.min(left, window.innerWidth - tooltipWidth - 8))
+        const top = bountyTooltipRect.top + bountyTooltipRect.height / 2
+        const topClamped = Math.max(12, Math.min(top, window.innerHeight - 90))
+        return createPortal(
+          <div
+            ref={bountyTooltipRef}
+            className="bounty-tooltip-portal"
+            style={{
+              left: leftClamped,
+              top: topClamped,
+              transform: 'translateY(-50%)',
+            }}
+          >
+            The Bounty is the player with the most points. Attack them and deal damage to earn +2 pts. If they block (take 0 damage), you lose 1 HP.
+          </div>,
+          document.body
+        )
+      })()}
 
       {showRulesPopup && (
         <div className="rules-popup-overlay" onClick={dismissRulesPopup}>

@@ -20,27 +20,38 @@ export const DAMAGE_CAP_PER_ROUND = 5
 export const MAX_PLAYERS = 10
 export const MAX_NAME_LENGTH = 10
 
-// Round interval: 2 minutes for testing (change to 3600 for production hourly)
-export const ROUND_INTERVAL_SECONDS = 120
+// Round interval: 3600 = hourly (production). Use 120 for testing.
+export const ROUND_INTERVAL_SECONDS = 3600
 
 export function getCurrentHourIndex() {
   const now = new Date()
-  const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
-  const roundIndex = Math.floor(totalSeconds / ROUND_INTERVAL_SECONDS) + 1
-  const secondsIntoRound = totalSeconds % ROUND_INTERVAL_SECONDS
+  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+  const hours = est.getHours()
+  const minutes = est.getMinutes()
+  const seconds = est.getSeconds()
+  // Round 1 at 12pm, Round 24 at 11am. Game runs 12pm–11:59am EST.
+  const hourFromStart = hours >= 12 ? hours - 12 : hours + 12
+  const roundIndex = hourFromStart + 1
+  const secondsIntoRound = minutes * 60 + seconds
   const isEvaluationSecond = secondsIntoRound === ROUND_INTERVAL_SECONDS - 1
 
   return { hourIndex: roundIndex, isEvaluationSecond }
 }
 
+// Game runs 12:00 PM–11:59 AM EST (24 rounds). Ends at 11:00 AM EST.
 export function isGameActive() {
-  return true // Always active for testing
+  const now = new Date()
+  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+  const hours = est.getHours()
+  return hours >= 12
 }
 
 export function getTimeUntilNextHour() {
   const now = new Date()
-  const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
-  const secondsIntoRound = totalSeconds % ROUND_INTERVAL_SECONDS
+  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+  const minutes = est.getMinutes()
+  const seconds = est.getSeconds()
+  const secondsIntoRound = minutes * 60 + seconds
   const secondsUntilEval = Math.max(0, ROUND_INTERVAL_SECONDS - 1 - secondsIntoRound)
 
   return {
