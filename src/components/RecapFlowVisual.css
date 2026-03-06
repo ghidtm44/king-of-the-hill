@@ -1,0 +1,109 @@
+.recap-flow {
+  font-size: 0.45rem;
+}
+
+.recap-flow-title {
+  margin: 0 0 1rem 0;
+  font-size: 0.5rem;
+  color: var(--accent-gold);
+}
+
+.recap-flow-empty {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.recap-flow-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recap-flow-target {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-light);
+  border: 2px solid var(--border-pixel);
+}
+
+.recap-flow-target.you {
+  border-color: var(--accent-gold);
+  background: rgba(235, 200, 50, 0.08);
+}
+
+.recap-flow-attackers {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.recap-flow-attacker {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.recap-flow-attacker-info {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 70px;
+}
+
+.recap-flow-attacker-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.you-label {
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+
+.recap-flow-bar-wrap {
+  flex: 1;
+  min-width: 40px;
+  height: 8px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-pixel);
+}
+
+.recap-flow-bar {
+  height: 100%;
+  background: var(--accent-gold);
+  min-width: 4px;
+}
+
+.recap-flow-arrow {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.recap-flow-target-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 80px;
+}
+
+.recap-flow-target-stats {
+  font-size: 0.35rem;
+  color: var(--text-muted);
+}
+
+.recap-flow-summary {
+  padding-top: 1rem;
+  border-top: 2px solid var(--border-pixel);
+}
+
+.recap-flow-summary p {
+  margin: 0.35rem 0;
+}

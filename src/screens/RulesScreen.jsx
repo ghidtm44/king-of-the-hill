@@ -36,7 +36,7 @@ export default function RulesScreen() {
 
         <section>
           <h2>EACH ROUND</h2>
-          <p>Tap a player to attack them—your choice saves immediately. Tap another to switch, or tap the same one to clear. No target? You attack randomly.</p>
+          <p>Tap a player to attack them—your choice saves immediately. Tap another to switch, or tap the same one to clear. No target? You don't attack that round.</p>
         </section>
 
         <section>

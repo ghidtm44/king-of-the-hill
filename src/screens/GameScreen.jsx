@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
 import { checkAndEndGame } from '../lib/endGame'
 import { getCurrentHourIndex, getTimeUntilNextHour, shouldEndPreviousGame, MAX_HEALTH, ICON_ATK, ICON_DEF, canNewPlayerAttackInFirstRound } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
 import HealthBar from '../components/HealthBar'
+import RecapFlowVisual from '../components/RecapFlowVisual'
+import GameTutorial from '../components/GameTutorial'
 import './GameScreen.css'
 
 export default function GameScreen() {
   const navigate = useNavigate()
+  const location = useLocation()
   const sessionId = localStorage.getItem('koth_session_id')
   const roomId = localStorage.getItem('koth_room_id')
 
@@ -18,6 +21,7 @@ export default function GameScreen() {
   const [players, setPlayers] = useState([])
   const [items, setItems] = useState([])
   const [roundResults, setRoundResults] = useState([])
+  const [roundLogAttacks, setRoundLogAttacks] = useState({})
   const [selectedTargetId, setSelectedTargetId] = useState(null)
   const [timeLeft, setTimeLeft] = useState({ minutes: 59, seconds: 59 })
   const [hourIndex, setHourIndex] = useState(0)
@@ -27,7 +31,7 @@ export default function GameScreen() {
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [playerRoundHistory, setPlayerRoundHistory] = useState(null)
   const [recapModal, setRecapModal] = useState(null)
-  const [recapText, setRecapText] = useState('')
+  const [recapData, setRecapData] = useState(null)
   const [bountyTooltipOpen, setBountyTooltipOpen] = useState(false)
   const [storeExpanded, setStoreExpanded] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? false : true
@@ -40,6 +44,7 @@ export default function GameScreen() {
   const [lastScavengeResultThisRound, setLastScavengeResultThisRound] = useState(null)
   const [pendingPurchase, setPendingPurchase] = useState(null)
   const [bountyTooltipRect, setBountyTooltipRect] = useState(null)
+  const [showTutorial, setShowTutorial] = useState(false)
   const bountyBadgeRef = useRef(null)
   const bountyTooltipRef = useRef(null)
 
@@ -72,6 +77,17 @@ export default function GameScreen() {
       .limit(5)
 
     setRoundResults(resultsData || [])
+
+    const { data: allRoomAttacks } = await supabase
+      .from('attack_allocations')
+      .select('*')
+      .eq('room_id', roomId)
+    const byHour = {}
+    ;(allRoomAttacks || []).forEach((a) => {
+      if (!byHour[a.hour_index]) byHour[a.hour_index] = []
+      byHour[a.hour_index].push(a)
+    })
+    setRoundLogAttacks(byHour)
 
     const lastRoundHour = (resultsData || [])[0]?.hour_index
     if (lastRoundHour != null) {
@@ -224,31 +240,19 @@ export default function GameScreen() {
   }, [bountyTooltipOpen])
 
   useEffect(() => {
+    if (location.state?.showTutorial && !localStorage.getItem('koth_tutorial_seen')) {
+      setShowTutorial(true)
+      navigate('/game', { replace: true, state: {} })
+    }
+  }, [location.state?.showTutorial, navigate])
+
+  useEffect(() => {
     loadData()
     const interval = setInterval(loadData, 5000)
     return () => clearInterval(interval)
   }, [loadData])
 
 
-  function buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, roundIndex) {
-    const getName = (sid) => players.find((p) => p.session_id === sid)?.name || '?'
-    const lines = []
-
-    lines.push(`1. Who you attacked: ${(myAttacks || []).length === 0 ? 'No one' : (myAttacks || []).map((a) => getName(a.target_session_id)).join(', ')}`)
-    lines.push(`2. Who attacked you: ${(attacksOnMe || []).length === 0 ? 'No one' : (attacksOnMe || []).map((a) => getName(a.attacker_session_id)).join(', ')}`)
-
-    const targetCounts = {}
-    ;(allRoundAttacks || []).forEach((a) => {
-      targetCounts[a.target_session_id] = (targetCounts[a.target_session_id] || 0) + 1
-    })
-    const sorted = Object.entries(targetCounts).sort((a, b) => b[1] - a[1])
-    const mostAttacked = sorted[0] ? getName(sorted[0][0]) : null
-    const leastAttacked = sorted.length > 0 ? getName(sorted[sorted.length - 1][0]) : null
-    lines.push(`3. Most attacked: ${mostAttacked || 'No one'}`)
-    lines.push(`4. Least attacked: ${leastAttacked || 'No one'}`)
-
-    return lines.join('\n')
-  }
 
   useEffect(() => {
     if (!me || !roundResults.length || me.is_eliminated) return
@@ -257,26 +261,14 @@ export default function GameScreen() {
     if (lastRound.hour_index > lastSeen) {
       localStorage.setItem('koth_last_recap_round', String(lastRound.hour_index))
       setRecapModal('last_round')
-      setRecapText('Loading...')
+      setRecapData(null)
       ;(async () => {
-        const { data: myAttacks } = await supabase
-          .from('attack_allocations')
-          .select('*')
-          .eq('room_id', roomId)
-          .eq('attacker_session_id', sessionId)
-          .eq('hour_index', lastRound.hour_index)
-        const { data: attacksOnMe } = await supabase
-          .from('attack_allocations')
-          .select('*')
-          .eq('room_id', roomId)
-          .eq('target_session_id', sessionId)
-          .eq('hour_index', lastRound.hour_index)
         const { data: allRoundAttacks } = await supabase
           .from('attack_allocations')
           .select('*')
           .eq('room_id', roomId)
           .eq('hour_index', lastRound.hour_index)
-        setRecapText(buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, lastRound.hour_index))
+        setRecapData({ rounds: [{ hourIndex: lastRound.hour_index, attacks: allRoundAttacks || [] }] })
       })()
     }
   }, [me?.id, roundResults, players, roomId, sessionId])
@@ -284,51 +276,34 @@ export default function GameScreen() {
   async function showLastRoundRecap() {
     if (!me || !roundResults.length) return
     setRecapModal('last_round')
-    setRecapText('Loading...')
+    setRecapData(null)
     const lastRound = roundResults[0]
-    const { data: myAttacks } = await supabase
-      .from('attack_allocations')
-      .select('*')
-      .eq('room_id', roomId)
-      .eq('attacker_session_id', sessionId)
-      .eq('hour_index', lastRound.hour_index)
-    const { data: attacksOnMe } = await supabase
-      .from('attack_allocations')
-      .select('*')
-      .eq('room_id', roomId)
-      .eq('target_session_id', sessionId)
-      .eq('hour_index', lastRound.hour_index)
     const { data: allRoundAttacks } = await supabase
       .from('attack_allocations')
       .select('*')
       .eq('room_id', roomId)
       .eq('hour_index', lastRound.hour_index)
-    setRecapText(buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, lastRound.hour_index))
+    setRecapData({ rounds: [{ hourIndex: lastRound.hour_index, attacks: allRoundAttacks || [] }] })
   }
 
   async function showFullGameRecap() {
     if (!me || !roundResults.length) return
     setRecapModal('full_game')
-    setRecapText('Loading...')
-    const lastRound = roundResults[0]
-    const { data: myAttacks } = await supabase
+    setRecapData(null)
+    const { data: allAttacks } = await supabase
       .from('attack_allocations')
       .select('*')
       .eq('room_id', roomId)
-      .eq('attacker_session_id', sessionId)
-      .eq('hour_index', lastRound.hour_index)
-    const { data: attacksOnMe } = await supabase
-      .from('attack_allocations')
-      .select('*')
-      .eq('room_id', roomId)
-      .eq('target_session_id', sessionId)
-      .eq('hour_index', lastRound.hour_index)
-    const { data: allRoundAttacks } = await supabase
-      .from('attack_allocations')
-      .select('*')
-      .eq('room_id', roomId)
-      .eq('hour_index', lastRound.hour_index)
-    setRecapText(buildRoundRecap(myAttacks, attacksOnMe, allRoundAttacks, players, lastRound.hour_index))
+    const byRound = {}
+    ;(allAttacks || []).forEach((a) => {
+      if (!byRound[a.hour_index]) byRound[a.hour_index] = []
+      byRound[a.hour_index].push(a)
+    })
+    const rounds = Object.entries(byRound)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))
+      .slice(0, 10)
+      .map(([hi, attacks]) => ({ hourIndex: Number(hi), attacks }))
+    setRecapData({ rounds })
   }
 
   useEffect(() => {
@@ -527,6 +502,11 @@ export default function GameScreen() {
       .eq('id', me.id)
     if (error) setPurchaseError(error.message)
     else loadData()
+  }
+
+  function dismissTutorial() {
+    localStorage.setItem('koth_tutorial_seen', 'true')
+    setShowTutorial(false)
   }
 
   function selectTarget(targetSessionId) {
@@ -772,7 +752,7 @@ export default function GameScreen() {
           <section className="attack-section">
             <h3>CHOOSE TARGET</h3>
             {canAttackThisRound ? (
-              <p className="attack-hint">Pick a target below. Your choice is highlighted in Rankings.</p>
+              <p className="attack-hint">Pick a target below. Your choice is highlighted in Rankings. No target = no attack.</p>
             ) : (
               <p className="attack-hint attack-blocked">New players can't attack in the last 15 min of their first round. You can attack next round.</p>
             )}
@@ -893,7 +873,7 @@ export default function GameScreen() {
         </main>
 
         <div className="round-log">
-          <h3>ROUND RECAP — Who attacked who</h3>
+          <h3>ROUND RECAP — Attack flow</h3>
           <div className="log-content">
             {roundResults.length === 0 ? (
               <p>No rounds yet. Results appear here every round.</p>
@@ -901,7 +881,17 @@ export default function GameScreen() {
               roundResults.map((r) => (
                 <div key={r.id} className="round-block">
                   <div className="round-header">Round {r.hour_index}</div>
-                  <pre className="round-detail">{r.result_text}</pre>
+                  {roundLogAttacks[r.hour_index]?.length > 0 ? (
+                    <RecapFlowVisual
+                      attacks={roundLogAttacks[r.hour_index]}
+                      players={players}
+                      sessionId={sessionId}
+                      roundIndex={r.hour_index}
+                      compact
+                    />
+                  ) : (
+                    <p className="round-detail round-detail-empty">No attacks this round.</p>
+                  )}
                 </div>
               ))
             )}
@@ -935,6 +925,10 @@ export default function GameScreen() {
         )
       })()}
 
+      {showTutorial && (
+        <GameTutorial onComplete={dismissTutorial} />
+      )}
+
       {scavengeResult && (
         <div className="scavenge-result-overlay" onClick={() => setScavengeResult(null)}>
           <div className="scavenge-result-popup" onClick={(e) => e.stopPropagation()}>
@@ -954,14 +948,28 @@ export default function GameScreen() {
       )}
 
       {recapModal && (
-        <div className="recap-modal" onClick={() => setRecapModal(null)}>
+        <div className="recap-modal" onClick={() => { setRecapModal(null); setRecapData(null) }}>
           <div className="recap-panel" onClick={(e) => e.stopPropagation()}>
             <div className="recap-header">
-              <h3>📜 {recapModal === 'last_round' ? 'Last Round' : 'Full Game'} Recap</h3>
-              <button className="close-btn" onClick={() => setRecapModal(null)} aria-label="Close">×</button>
+              <h3>📜 {recapModal === 'last_round' ? 'Last Round' : 'Full Game'} — Attack flow</h3>
+              <button className="close-btn" onClick={() => { setRecapModal(null); setRecapData(null) }} aria-label="Close">×</button>
             </div>
             <div className="recap-body">
-              <pre className="recap-text">{recapText}</pre>
+              {!recapData ? (
+                <p className="recap-loading">Loading...</p>
+              ) : (
+                <div className="recap-flow-list">
+                  {recapData.rounds.map((r) => (
+                    <RecapFlowVisual
+                      key={r.hourIndex}
+                      attacks={r.attacks}
+                      players={players}
+                      sessionId={sessionId}
+                      roundIndex={r.hourIndex}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

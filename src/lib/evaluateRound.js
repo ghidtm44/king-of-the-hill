@@ -63,29 +63,8 @@ export async function evaluateRound(roomId, hourIndex) {
     }
   })
 
-  // Assign random targets for survivors who didn't choose
-  const existingAttackers = new Set((attacks || []).map((a) => a.attacker_session_id))
-  const othersBySession = {}
-  survivors.forEach((p) => {
-    othersBySession[p.session_id] = survivors.filter((s) => s.session_id !== p.session_id)
-  })
-
+  // Only process attacks from players who chose a target—no random assignment
   const attacksToProcess = [...(attacks || [])]
-  for (const p of survivors) {
-    if (existingAttackers.has(p.session_id)) continue
-    if (!canNewPlayerAttackInFirstRound(p.joined_at, hourIndex)) continue
-    const others = othersBySession[p.session_id]
-    if (others.length === 0) continue
-    const randomTarget = others[Math.floor(Math.random() * others.length)]
-    const item = p.current_item_id ? itemsMap[p.current_item_id] : null
-    const stance = stanceBySession[p.session_id]
-    const attackValue = p.attack_points + (item?.attack_bonus || 0) + (stance === 'aggressive' ? 1 : 0)
-    attacksToProcess.push({
-      attacker_session_id: p.session_id,
-      target_session_id: randomTarget.session_id,
-      attack_points_used: attackValue,
-    })
-  }
 
   const attackerJoinedAt = Object.fromEntries(allPlayers.map((p) => [p.session_id, p.joined_at]))
 
@@ -212,19 +191,6 @@ export async function evaluateRound(roomId, hourIndex) {
     hour_index: hourIndex,
     result_text: resultText,
   })
-
-  // Persist random allocations so they're visible
-  const existingAttackerIds = new Set((attacks || []).map((x) => x.attacker_session_id))
-  for (const a of attacksToProcess) {
-    if (existingAttackerIds.has(a.attacker_session_id)) continue
-    await supabase.from('attack_allocations').insert({
-      room_id: roomId,
-      attacker_session_id: a.attacker_session_id,
-      target_session_id: a.target_session_id,
-      attack_points_used: a.attack_points_used,
-      hour_index: hourIndex,
-    })
-  }
 
   // Current ranking (before this round) = end of previous round
   const sortedByPoints = [...allPlayers].sort((a, b) => b.total_points - a.total_points)

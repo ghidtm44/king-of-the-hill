@@ -118,7 +118,7 @@ export default function CharacterCreate() {
     }
 
     localStorage.setItem('koth_room_id', room.id)
-    navigate('/game')
+    navigate('/game', { state: { showTutorial: true } })
   }
 
   if (loading) return <div className="loading">Loading...</div>
@@ -131,7 +131,7 @@ export default function CharacterCreate() {
             <h3>How to Play</h3>
             <div className="rules-popup-content">
               <p><strong>Goal:</strong> Most points wins. Eliminate opponents (HP → 0 = out). Team up on targets—combined attacks deal more damage. Game lasts 24 hrs (12pm–11:59am EST).</p>
-              <p><strong>Each round:</strong> Tap a player to attack them—saves instantly. Tap another to switch, or tap same to clear. No target = random.</p>
+              <p><strong>Each round:</strong> Tap a player to attack them—saves instantly. Tap another to switch, or tap same to clear. No target = no attack.</p>
               <p><strong>Combat:</strong> Total attack vs defense. Damage capped at 5/round.</p>
               <p><strong>Bounty</strong> (🎯): Most points. Hit them = +2 pts if damage dealt. Block = you lose 1 HP.</p>
               <p><strong>Points:</strong> +1 survive, +1 damage (+2 if Bounty).</p>
