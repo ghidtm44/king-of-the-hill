@@ -879,45 +879,77 @@
   cursor: not-allowed;
 }
 
-.round-log {
+/* Bottom app drawers - Recap and Store */
+.bottom-drawers {
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.app-drawer {
   background: var(--bg-medium);
   border: 4px solid var(--border-pixel);
-  padding: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  transition: max-height 0.2s ease;
 }
 
-.round-log.expanded {
-  max-height: none;
+.app-drawer:not(.open) {
+  max-height: 44px;
 }
 
-.round-log-expand-btn {
+.app-drawer .drawer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0;
-  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
   background: none;
   border: none;
   cursor: pointer;
   color: inherit;
   font: inherit;
+  flex-shrink: 0;
 }
 
-.round-log-expand-btn:hover {
+.app-drawer .drawer-header:hover {
   color: var(--accent-gold);
 }
 
-.round-log-arrow {
+.app-drawer .drawer-header h3 {
+  font-size: 0.55rem;
+  margin: 0;
+}
+
+.app-drawer .drawer-arrow {
   font-size: 0.5rem;
   color: var(--accent-gold);
 }
 
-.round-log h3 {
-  font-size: 0.55rem;
-  margin: 0;
+.app-drawer .drawer-content {
+  padding: 0 1rem 1rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-drawer:not(.open) .drawer-content {
+  display: none;
+}
+
+.app-drawer .my-items-section {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border-pixel);
+}
+
+.app-drawer .my-items-section h4 {
+  font-size: 0.45rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-muted);
 }
 
 .round-block {
@@ -1485,9 +1517,10 @@
     order: 2;
   }
 
-  .round-log {
-    grid-column: auto;
+  .bottom-drawers {
     order: 3;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
   }
 
   .attack-btn {
@@ -1515,8 +1548,8 @@
     min-height: 44px;
   }
 
-  .round-log:not(.expanded) {
-    max-height: 150px;
+  .app-drawer.open {
+    max-height: 220px;
   }
 
   .winner-screen,

@@ -22,7 +22,7 @@ export default function GameScreen() {
   const [items, setItems] = useState([])
   const [roundResults, setRoundResults] = useState([])
   const [roundLogAttacks, setRoundLogAttacks] = useState({})
-  const [roundLogExpanded, setRoundLogExpanded] = useState(false)
+  const [recapDrawerOpen, setRecapDrawerOpen] = useState(false)
   const [selectedTargetId, setSelectedTargetId] = useState(null)
   const [timeLeft, setTimeLeft] = useState({ minutes: 59, seconds: 59 })
   const [hourIndex, setHourIndex] = useState(0)
@@ -34,9 +34,7 @@ export default function GameScreen() {
   const [recapModal, setRecapModal] = useState(null)
   const [recapData, setRecapData] = useState(null)
   const [bountyTooltipOpen, setBountyTooltipOpen] = useState(false)
-  const [storeExpanded, setStoreExpanded] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? false : true
-  )
+  const [storeDrawerOpen, setStoreDrawerOpen] = useState(false)
   const [lastRoundAttackersOnMe, setLastRoundAttackersOnMe] = useState(new Set())
   const [lastRoundSameTargetAttackers, setLastRoundSameTargetAttackers] = useState(new Set())
   const [scavengeUsedThisRound, setScavengeUsedThisRound] = useState(false)
@@ -791,71 +789,6 @@ export default function GameScreen() {
             )}
           </section>
 
-          <section className="my-items-section">
-            <h3>MY ITEMS</h3>
-            {myItem ? (
-              <div className="equipped-item">
-                <span className="item-name">{myItem.name}</span>
-                <span className="item-bonus">
-                  {myItem.hp_on_purchase
-                    ? `+${myItem.hp_on_purchase} HP`
-                    : myItem.damage_reduction
-                      ? `-${myItem.damage_reduction} dmg`
-                      : `+${myItem.attack_bonus || 0} ${ICON_ATK}, +${myItem.defense_bonus || 0} ${ICON_DEF}`}
-                </span>
-                <button
-                  type="button"
-                  className="remove-item-btn"
-                  onClick={handleRemoveItem}
-                  disabled={me.is_eliminated}
-                  title="Remove item (no refund)"
-                >
-                  REMOVE
-                </button>
-              </div>
-            ) : (
-              <p className="no-item">No item equipped</p>
-            )}
-          </section>
-
-          <section className={`store-section ${storeExpanded ? 'expanded' : 'collapsed'}`}>
-            <button
-              type="button"
-              className="store-section-toggle"
-              onClick={() => setStoreExpanded(!storeExpanded)}
-              aria-expanded={storeExpanded}
-              aria-label={storeExpanded ? 'Collapse item store' : 'Expand item store'}
-            >
-              <h3>ITEM STORE</h3>
-              <span className="store-toggle-icon" aria-hidden="true">{storeExpanded ? '—' : '▼'}</span>
-            </button>
-            <div className="store-section-content">
-              <div className="items-grid">
-                  {items.map((item) => (
-                    <div key={item.id} className="item-card">
-                      <p className="item-name">{item.name}</p>
-                      <p className="item-desc">
-                        {item.hp_on_purchase
-                          ? `+${item.hp_on_purchase} HP (consumable)`
-                          : item.damage_reduction
-                            ? `-${item.damage_reduction} dmg taken`
-                            : `+${item.attack_bonus || 0} ${ICON_ATK}, +${item.defense_bonus || 0} ${ICON_DEF}`}
-                      </p>
-                      <p className="item-cost">{item.cost} pts</p>
-                      <button
-                        onClick={() => requestPurchase(item)}
-                        disabled={item.cost > me.total_points || me.is_eliminated}
-                        title={myItem ? 'Swap item (no refund for current item)' : undefined}
-                      >
-                        {myItem ? 'SWAP' : 'BUY'}
-                      </button>
-                    </div>
-                  ))}
-              </div>
-              {purchaseError && <p className="error">{purchaseError}</p>}
-            </div>
-          </section>
-
           {pendingPurchase && (
             <div className="purchase-confirm-overlay" onClick={cancelPurchase}>
               <div className="purchase-confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -873,38 +806,103 @@ export default function GameScreen() {
           )}
         </main>
 
-        <div className={`round-log ${roundLogExpanded ? 'expanded' : ''}`}>
-          <button
-            type="button"
-            className="round-log-expand-btn"
-            onClick={() => setRoundLogExpanded((e) => !e)}
-            aria-expanded={roundLogExpanded}
-            aria-label={roundLogExpanded ? 'Collapse recap' : 'Expand recap'}
-          >
-            <h3>ROUND RECAP — Attack flow</h3>
-            <span className="round-log-arrow">{roundLogExpanded ? '▼' : '▲'}</span>
-          </button>
-          <div className="log-content">
-            {roundResults.length === 0 ? (
-              <p>No rounds yet. Results appear here every round.</p>
-            ) : (
-              roundResults.map((r) => (
-                <div key={r.id} className="round-block">
-                  <div className="round-header">Round {r.hour_index}</div>
-                  {roundLogAttacks[r.hour_index]?.length > 0 ? (
-                    <RecapFlowVisual
-                      attacks={roundLogAttacks[r.hour_index]}
-                      players={players}
-                      sessionId={sessionId}
-                      roundIndex={r.hour_index}
-                      compact
-                    />
-                  ) : (
-                    <p className="round-detail round-detail-empty">No attacks this round.</p>
-                  )}
-                </div>
-              ))
-            )}
+        <div className="bottom-drawers">
+          <div className={`app-drawer recap-drawer ${recapDrawerOpen ? 'open' : ''}`}>
+            <button
+              type="button"
+              className="drawer-header"
+              onClick={() => setRecapDrawerOpen((o) => !o)}
+              aria-expanded={recapDrawerOpen}
+              aria-label={recapDrawerOpen ? 'Collapse round recap' : 'Expand round recap'}
+            >
+              <h3>ROUND RECAP</h3>
+              <span className="drawer-arrow" aria-hidden="true">{recapDrawerOpen ? '▼' : '▲'}</span>
+            </button>
+            <div className="drawer-content">
+              {roundResults.length === 0 ? (
+                <p>No rounds yet. Results appear here every round.</p>
+              ) : (
+                roundResults.map((r) => (
+                  <div key={r.id} className="round-block">
+                    <div className="round-header">Round {r.hour_index}</div>
+                    {roundLogAttacks[r.hour_index]?.length > 0 ? (
+                      <RecapFlowVisual
+                        attacks={roundLogAttacks[r.hour_index]}
+                        players={players}
+                        sessionId={sessionId}
+                        roundIndex={r.hour_index}
+                        compact
+                      />
+                    ) : (
+                      <p className="round-detail round-detail-empty">No attacks this round.</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className={`app-drawer store-drawer ${storeDrawerOpen ? 'open' : ''}`}>
+            <button
+              type="button"
+              className="drawer-header"
+              onClick={() => setStoreDrawerOpen((o) => !o)}
+              aria-expanded={storeDrawerOpen}
+              aria-label={storeDrawerOpen ? 'Collapse item store' : 'Expand item store'}
+            >
+              <h3>ITEM STORE</h3>
+              <span className="drawer-arrow" aria-hidden="true">{storeDrawerOpen ? '▼' : '▲'}</span>
+            </button>
+            <div className="drawer-content">
+              <section className="my-items-section">
+                <h4>MY ITEMS</h4>
+                {myItem ? (
+                  <div className="equipped-item">
+                    <span className="item-name">{myItem.name}</span>
+                    <span className="item-bonus">
+                      {myItem.hp_on_purchase
+                        ? `+${myItem.hp_on_purchase} HP`
+                        : myItem.damage_reduction
+                          ? `-${myItem.damage_reduction} dmg`
+                          : `+${myItem.attack_bonus || 0} ${ICON_ATK}, +${myItem.defense_bonus || 0} ${ICON_DEF}`}
+                    </span>
+                    <button
+                      type="button"
+                      className="remove-item-btn"
+                      onClick={handleRemoveItem}
+                      disabled={me.is_eliminated}
+                      title="Remove item (no refund)"
+                    >
+                      REMOVE
+                    </button>
+                  </div>
+                ) : (
+                  <p className="no-item">No item equipped</p>
+                )}
+              </section>
+              <div className="items-grid">
+                {items.map((item) => (
+                  <div key={item.id} className="item-card">
+                    <p className="item-name">{item.name}</p>
+                    <p className="item-desc">
+                      {item.hp_on_purchase
+                        ? `+${item.hp_on_purchase} HP (consumable)`
+                        : item.damage_reduction
+                          ? `-${item.damage_reduction} dmg taken`
+                          : `+${item.attack_bonus || 0} ${ICON_ATK}, +${item.defense_bonus || 0} ${ICON_DEF}`}
+                    </p>
+                    <p className="item-cost">{item.cost} pts</p>
+                    <button
+                      onClick={() => requestPurchase(item)}
+                      disabled={item.cost > me.total_points || me.is_eliminated}
+                      title={myItem ? 'Swap item (no refund for current item)' : undefined}
+                    >
+                      {myItem ? 'SWAP' : 'BUY'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {purchaseError && <p className="error">{purchaseError}</p>}
+            </div>
           </div>
         </div>
       </div>
