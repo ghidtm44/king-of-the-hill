@@ -925,6 +925,19 @@ export default function GameScreen() {
                           ? `-${myItem.damage_reduction} dmg`
                           : `+${myItem.attack_bonus || 0} ${ICON_ATK}, +${myItem.defense_bonus || 0} ${ICON_DEF}`}
                     </span>
+                    {me.item_acquired_round != null && (
+                      <span className="item-rounds-left">
+                        {(() => {
+                          const roundsUsed = hourIndex - me.item_acquired_round + 1
+                          const roundsLeft = Math.max(0, 3 - roundsUsed)
+                          return roundsLeft === 0
+                            ? 'Expires after this round'
+                            : roundsLeft === 1
+                              ? '1 round left after this'
+                              : `${roundsLeft} rounds left after this`
+                        })()}
+                      </span>
+                    )}
                     <button
                       type="button"
                       className="remove-item-btn"

@@ -762,6 +762,11 @@
   color: var(--text-muted);
 }
 
+.my-items-section .equipped-item .item-rounds-left {
+  font-size: 0.35rem;
+  color: var(--accent-gold);
+}
+
 .remove-item-btn {
   margin-top: 0.5rem;
   padding: 0.35rem 0.75rem;
