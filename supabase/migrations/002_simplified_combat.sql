@@ -5,6 +5,9 @@
 ALTER TABLE players ALTER COLUMN total_points SET DEFAULT 5;
 ALTER TABLE players ALTER COLUMN health_points SET DEFAULT 20;
 
+-- Cap existing players with old 50 HP to 20
+UPDATE players SET health_points = 20 WHERE health_points > 20;
+
 -- Add new columns to items for Potion and Trap
 ALTER TABLE items ADD COLUMN IF NOT EXISTS damage_reduction INTEGER DEFAULT 0;
 ALTER TABLE items ADD COLUMN IF NOT EXISTS hp_on_purchase INTEGER DEFAULT 0;

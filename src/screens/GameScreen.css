@@ -99,13 +99,8 @@
   color: var(--accent-gold);
 }
 
-.player-info .health {
-  font-size: 0.35rem;
-  color: var(--text-muted);
-}
-
-.player-info .health.low {
-  color: var(--accent-red);
+.player-info .health-bar-wrap {
+  width: 100%;
 }
 
 .last-item {
@@ -147,6 +142,25 @@
 .my-items-section .equipped-item .item-bonus {
   font-size: 0.4rem;
   color: var(--text-muted);
+}
+
+.remove-item-btn {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.35rem;
+  background: var(--bg-dark);
+  border: 2px solid var(--accent-red);
+  color: var(--accent-red);
+}
+
+.remove-item-btn:hover:not(:disabled) {
+  background: var(--accent-red);
+  color: white;
+}
+
+.remove-item-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .my-items-section .no-item {
@@ -198,6 +212,8 @@
   padding: 0.5rem;
   background: var(--bg-light);
   border: 2px solid var(--border-pixel);
+  min-width: 200px;
+  flex: 1 1 auto;
 }
 
 .attack-btn {
@@ -232,6 +248,8 @@
 .attack-target .target-name {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .attack-target .target-pts {
@@ -239,6 +257,7 @@
   color: var(--accent-gold);
   min-width: 1.5rem;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .submit-attacks {

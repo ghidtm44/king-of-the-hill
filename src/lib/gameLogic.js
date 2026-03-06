@@ -19,9 +19,7 @@ export const MAX_HEALTH = 20
 export const MAX_PLAYERS = 10
 export const MAX_NAME_LENGTH = 10
 
-// EST timezone helpers - Rounds run every 5 minutes (for faster testing)
-const ROUND_MINUTES = 5
-
+// EST timezone helpers - Rounds run every hour (12pm to 11am next day)
 export function getCurrentHourIndex() {
   const now = new Date()
   const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
@@ -29,15 +27,15 @@ export function getCurrentHourIndex() {
   const minutes = est.getMinutes()
   const seconds = est.getSeconds()
 
-  // Game runs 12pm to 11am next day
+  // Game runs 12pm to 11am next day (24 rounds)
   let hourFromStart = hours - 12
   if (hourFromStart < 0) hourFromStart += 24
 
-  // Round index: one per 5-minute block (0 at 12:00, 1 at 12:05, etc.)
-  const roundIndex = hourFromStart * (60 / ROUND_MINUTES) + Math.floor(minutes / ROUND_MINUTES)
+  // Round index: 1-based, Round 1 at 12:00:00, Round 2 at 1:00:00, etc.
+  const roundIndex = hourFromStart + 1
 
-  // Evaluate at last second of each 5-min block (e.g. 12:04:59, 12:09:59)
-  const isEvaluationSecond = minutes % ROUND_MINUTES === ROUND_MINUTES - 1 && seconds === 59
+  // Evaluate at last second of each hour (XX:59:59)
+  const isEvaluationSecond = minutes === 59 && seconds === 59
 
   return { hourIndex: roundIndex, minutes, seconds, isEvaluationSecond }
 }
@@ -59,10 +57,9 @@ export function getTimeUntilNextHour() {
   const minutes = est.getMinutes()
   const seconds = est.getSeconds()
 
-  // Seconds into current 5-min block
-  const secondsIntoBlock = (minutes % ROUND_MINUTES) * 60 + seconds
-  // Seconds until evaluation (last second of block)
-  const secondsUntilEval = (ROUND_MINUTES - 1) * 60 + 59 - secondsIntoBlock
+  // Seconds until XX:59:59 (evaluation moment)
+  const secondsIntoHour = minutes * 60 + seconds
+  const secondsUntilEval = 59 * 60 + 59 - secondsIntoHour
 
   return {
     minutes: Math.floor(secondsUntilEval / 60),

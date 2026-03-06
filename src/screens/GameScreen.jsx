@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { evaluateRound } from '../lib/evaluateRound'
 import { checkAndEndGame } from '../lib/endGame'
-import { getCurrentHourIndex, getTimeUntilNextHour, isGameActive } from '../lib/gameLogic'
+import { getCurrentHourIndex, getTimeUntilNextHour, isGameActive, MAX_HEALTH } from '../lib/gameLogic'
 import PixelKnight from '../components/PixelKnight'
+import HealthBar from '../components/HealthBar'
 import './GameScreen.css'
 
 export default function GameScreen() {
@@ -22,6 +23,7 @@ export default function GameScreen() {
   const [purchaseError, setPurchaseError] = useState('')
   const [loading, setLoading] = useState(true)
   const [attacksAgainstMe, setAttacksAgainstMe] = useState([])
+  const hasUnsavedAttackChanges = useRef(false)
 
   const loadData = useCallback(async () => {
     if (!roomId || !sessionId) {
@@ -64,7 +66,9 @@ export default function GameScreen() {
     ;(myAttacks || []).forEach((a) => {
       alloc[a.target_session_id] = (alloc[a.target_session_id] || 0) + a.attack_points_used
     })
-    setAttackAllocations(alloc)
+    if (!hasUnsavedAttackChanges.current) {
+      setAttackAllocations(alloc)
+    }
 
     const mePlayer = (playersData || []).find((p) => p.session_id === sessionId)
     if (mePlayer?.is_eliminated) {
@@ -91,6 +95,10 @@ export default function GameScreen() {
     const interval = setInterval(loadData, 5000)
     return () => clearInterval(interval)
   }, [loadData])
+
+  useEffect(() => {
+    hasUnsavedAttackChanges.current = false
+  }, [hourIndex])
 
   useEffect(() => {
     const tick = () => {
@@ -147,6 +155,7 @@ export default function GameScreen() {
         })
       }
     }
+    hasUnsavedAttackChanges.current = false
     setAttackAllocations(alloc)
     loadData()
   }
@@ -163,7 +172,7 @@ export default function GameScreen() {
     const updates = {
       total_points: me.total_points - item.cost,
       ...(isPotion
-        ? { health_points: Math.min(20, me.health_points + (item.hp_on_purchase || 0)) }
+        ? { health_points: Math.min(MAX_HEALTH, me.health_points + (item.hp_on_purchase || 0)) }
         : { current_item_id: item.id }),
     }
 
@@ -176,7 +185,19 @@ export default function GameScreen() {
     loadData()
   }
 
+  async function handleRemoveItem() {
+    if (!me || me.is_eliminated || !me.current_item_id) return
+    setPurchaseError('')
+    const { error } = await supabase
+      .from('players')
+      .update({ current_item_id: null })
+      .eq('id', me.id)
+    if (error) setPurchaseError(error.message)
+    else loadData()
+  }
+
   function addAttackPoint(targetSessionId) {
+    hasUnsavedAttackChanges.current = true
     const currentTotal = Object.values(attackAllocations).reduce((a, b) => a + b, 0)
     if (currentTotal < effectiveAttack) {
       setAttackAllocations((prev) => ({
@@ -187,6 +208,7 @@ export default function GameScreen() {
   }
 
   function removeAttackPoint(targetSessionId) {
+    hasUnsavedAttackChanges.current = true
     const current = attackAllocations[targetSessionId] || 0
     if (current > 0) {
       setAttackAllocations((prev) => ({
@@ -260,7 +282,7 @@ export default function GameScreen() {
           <PixelKnight color={me.color} size="small" />
           <span>{me.name}</span>
           <span>{me.total_points} pts</span>
-          <span>{me.health_points}/20 HP</span>
+          <HealthBar current={Math.min(me.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} compact />
           <span>{effectiveAttack}A/{effectiveDefense}D</span>
         </div>
       </div>
@@ -279,7 +301,7 @@ export default function GameScreen() {
                   {p.defense_points + (items.find((i) => i.id === p.current_item_id)?.defense_bonus || 0)}D
                 </span>
                 <span className="points">{p.total_points} pts</span>
-                <span className={`health ${p.health_points <= 6 ? 'low' : ''}`}>{p.health_points}/20 HP</span>
+                <HealthBar current={Math.min(p.health_points, MAX_HEALTH)} max={MAX_HEALTH} showLabel={true} />
                 {p.last_round_item_id && (
                   <span className="last-item" title={items.find((i) => i.id === p.last_round_item_id)?.name || 'Item'}>
                     ⚔
@@ -303,6 +325,15 @@ export default function GameScreen() {
                       ? `-${myItem.damage_reduction} dmg`
                       : `+${myItem.attack_bonus || 0} atk, +${myItem.defense_bonus || 0} def`}
                 </span>
+                <button
+                  type="button"
+                  className="remove-item-btn"
+                  onClick={handleRemoveItem}
+                  disabled={me.is_eliminated}
+                  title="Remove item (no refund)"
+                >
+                  REMOVE
+                </button>
               </div>
             ) : (
               <p className="no-item">No item equipped</p>
@@ -389,8 +420,9 @@ export default function GameScreen() {
                   <button
                     onClick={() => handlePurchase(item)}
                     disabled={item.cost > me.total_points || me.is_eliminated}
+                    title={myItem ? 'Swap item (no refund for current item)' : undefined}
                   >
-                    BUY
+                    {myItem ? 'SWAP' : 'BUY'}
                   </button>
                 </div>
               ))}
@@ -404,7 +436,7 @@ export default function GameScreen() {
         <h3>HOURLY RECAP — Who attacked who</h3>
         <div className="log-content">
           {roundResults.length === 0 ? (
-            <p>No rounds yet. Results appear here every 5 min.</p>
+            <p>No rounds yet. Results appear here every hour.</p>
           ) : (
             roundResults.map((r) => (
               <div key={r.id} className="round-block">

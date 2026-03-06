@@ -1,0 +1,41 @@
+.health-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.health-bar {
+  flex: 1;
+  min-width: 40px;
+  height: 10px;
+  background: #2a2a2a;
+  border: 2px solid var(--border-pixel);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.health-bar-fill {
+  height: 100%;
+  background: var(--accent-green);
+  transition: width 0.2s ease;
+}
+
+.health-bar.low .health-bar-fill {
+  background: var(--accent-red);
+}
+
+.health-bar-label {
+  font-size: 0.35rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.health-bar-wrap.compact {
+  max-width: 80px;
+}
+
+.health-bar-wrap.compact .health-bar {
+  min-width: 30px;
+  height: 8px;
+}
