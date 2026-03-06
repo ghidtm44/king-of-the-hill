@@ -69,6 +69,7 @@ export default function MainScreen() {
             HALL OF FAME
           </button>
         </div>
+        <p className="footer-credit">A game created by Todd G</p>
       </div>
     </div>
   )
