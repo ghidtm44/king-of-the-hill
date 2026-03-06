@@ -14,8 +14,8 @@ export const COLORS = [
   { name: 'Orange', value: '#e85d04' },
 ]
 
-export const STARTING_POINTS = 10
-export const MAX_HEALTH = 50
+export const STARTING_POINTS = 5
+export const MAX_HEALTH = 20
 export const MAX_PLAYERS = 10
 export const MAX_NAME_LENGTH = 10
 

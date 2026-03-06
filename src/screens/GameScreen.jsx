@@ -159,10 +159,15 @@ export default function GameScreen() {
       return
     }
 
-    const { error } = await supabase
-      .from('players')
-      .update({ current_item_id: item.id, total_points: me.total_points - item.cost })
-      .eq('id', me.id)
+    const isPotion = item.hp_on_purchase > 0
+    const updates = {
+      total_points: me.total_points - item.cost,
+      ...(isPotion
+        ? { health_points: Math.min(20, me.health_points + (item.hp_on_purchase || 0)) }
+        : { current_item_id: item.id }),
+    }
+
+    const { error } = await supabase.from('players').update(updates).eq('id', me.id)
 
     if (error) {
       setPurchaseError(error.message)
@@ -171,16 +176,22 @@ export default function GameScreen() {
     loadData()
   }
 
-  function setAttackForTarget(targetSessionId, value) {
-    const num = Math.max(0, parseInt(value, 10) || 0)
+  function addAttackPoint(targetSessionId) {
     const currentTotal = Object.values(attackAllocations).reduce((a, b) => a + b, 0)
-    const currentForTarget = attackAllocations[targetSessionId] || 0
-    const othersTotal = currentTotal - currentForTarget
-    const newTotal = othersTotal + num
-    if (newTotal <= effectiveAttack) {
+    if (currentTotal < effectiveAttack) {
       setAttackAllocations((prev) => ({
         ...prev,
-        [targetSessionId]: num,
+        [targetSessionId]: (prev[targetSessionId] || 0) + 1,
+      }))
+    }
+  }
+
+  function removeAttackPoint(targetSessionId) {
+    const current = attackAllocations[targetSessionId] || 0
+    if (current > 0) {
+      setAttackAllocations((prev) => ({
+        ...prev,
+        [targetSessionId]: current - 1,
       }))
     }
   }
@@ -249,6 +260,7 @@ export default function GameScreen() {
           <PixelKnight color={me.color} size="small" />
           <span>{me.name}</span>
           <span>{me.total_points} pts</span>
+          <span>{me.health_points}/20 HP</span>
           <span>{effectiveAttack}A/{effectiveDefense}D</span>
         </div>
       </div>
@@ -267,6 +279,7 @@ export default function GameScreen() {
                   {p.defense_points + (items.find((i) => i.id === p.current_item_id)?.defense_bonus || 0)}D
                 </span>
                 <span className="points">{p.total_points} pts</span>
+                <span className={`health ${p.health_points <= 6 ? 'low' : ''}`}>{p.health_points}/20 HP</span>
                 {p.last_round_item_id && (
                   <span className="last-item" title={items.find((i) => i.id === p.last_round_item_id)?.name || 'Item'}>
                     ⚔
@@ -283,7 +296,13 @@ export default function GameScreen() {
             {myItem ? (
               <div className="equipped-item">
                 <span className="item-name">{myItem.name}</span>
-                <span className="item-bonus">+{myItem.attack_bonus} atk, +{myItem.defense_bonus} def</span>
+                <span className="item-bonus">
+                  {myItem.hp_on_purchase
+                    ? `+${myItem.hp_on_purchase} HP`
+                    : myItem.damage_reduction
+                      ? `-${myItem.damage_reduction} dmg`
+                      : `+${myItem.attack_bonus || 0} atk, +${myItem.defense_bonus || 0} def`}
+                </span>
               </div>
             ) : (
               <p className="no-item">No item equipped</p>
@@ -313,24 +332,39 @@ export default function GameScreen() {
 
           <section className="attack-section">
             <h3>ATTACK ({totalAllocated}/{effectiveAttack})</h3>
+            <p className="attack-hint">Tap +/− to allocate. Change anytime before confirming.</p>
             {otherPlayers.length === 0 ? (
               <p>No other players</p>
             ) : (
               <div className="attack-targets">
-                {otherPlayers.map((p) => (
-                  <div key={p.id} className="attack-target">
-                    <PixelKnight color={p.color} size="small" />
-                    <span>{p.name}</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={effectiveAttack}
-                      value={attackAllocations[p.session_id] || ''}
-                      onChange={(e) => setAttackForTarget(p.session_id, e.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                ))}
+                {otherPlayers.map((p) => {
+                  const pts = attackAllocations[p.session_id] || 0
+                  return (
+                    <div key={p.id} className="attack-target">
+                      <button
+                        type="button"
+                        className="attack-btn minus"
+                        onClick={() => removeAttackPoint(p.session_id)}
+                        disabled={pts === 0 || me.is_eliminated}
+                        aria-label={`Remove from ${p.name}`}
+                      >
+                        −
+                      </button>
+                      <PixelKnight color={p.color} size="small" />
+                      <span className="target-name">{p.name}</span>
+                      <span className="target-pts">{pts}</span>
+                      <button
+                        type="button"
+                        className="attack-btn plus"
+                        onClick={() => addAttackPoint(p.session_id)}
+                        disabled={totalAllocated >= effectiveAttack || me.is_eliminated}
+                        aria-label={`Add to ${p.name}`}
+                      >
+                        +
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
             <button className="submit-attacks" onClick={submitAttacks} disabled={me.is_eliminated}>
@@ -344,7 +378,13 @@ export default function GameScreen() {
               {items.map((item) => (
                 <div key={item.id} className="item-card">
                   <p className="item-name">{item.name}</p>
-                  <p className="item-desc">+{item.attack_bonus} atk, +{item.defense_bonus} def</p>
+                  <p className="item-desc">
+                    {item.hp_on_purchase
+                      ? `+${item.hp_on_purchase} HP (consumable)`
+                      : item.damage_reduction
+                        ? `-${item.damage_reduction} dmg taken`
+                        : `+${item.attack_bonus || 0} atk, +${item.defense_bonus || 0} def`}
+                  </p>
                   <p className="item-cost">{item.cost} pts</p>
                   <button
                     onClick={() => handlePurchase(item)}

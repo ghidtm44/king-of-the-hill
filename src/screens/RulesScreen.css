@@ -58,3 +58,40 @@
   left: 0;
   color: var(--accent-gold);
 }
+
+.rules-content ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: item;
+}
+
+.rules-content ol li {
+  padding-left: 1.5rem;
+  counter-increment: item;
+}
+
+.rules-content ol li::before {
+  content: counter(item) '. ';
+  position: absolute;
+  left: 0;
+  color: var(--accent-gold);
+}
+
+@media (max-width: 768px) {
+  .rules-screen {
+    padding: 1rem;
+  }
+
+  .rules-screen h1 {
+    font-size: 1rem;
+  }
+
+  .rules-content section h2 {
+    font-size: 0.55rem;
+  }
+
+  .rules-content section p,
+  .rules-content section li {
+    font-size: 0.4rem;
+  }
+}

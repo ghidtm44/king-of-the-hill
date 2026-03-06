@@ -138,3 +138,23 @@
   justify-content: center;
   font-size: 0.6rem;
 }
+
+@media (max-width: 768px) {
+  .character-create {
+    padding: 1rem;
+  }
+
+  .class-btn,
+  .color-btn {
+    min-height: 44px;
+  }
+
+  .color-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .submit-btn {
+    min-height: 48px;
+  }
+}

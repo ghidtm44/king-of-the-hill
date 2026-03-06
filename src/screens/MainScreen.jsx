@@ -1,10 +1,18 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PixelKnight from '../components/PixelKnight'
 import './MainScreen.css'
 
 export default function MainScreen() {
   const navigate = useNavigate()
+  const [hasActiveGame, setHasActiveGame] = useState(false)
   const crowdColors = ['#c41e3a', '#1e3a8a', '#2d6a4f', '#e6b800']
+
+  useEffect(() => {
+    const sessionId = localStorage.getItem('koth_session_id')
+    const roomId = localStorage.getItem('koth_room_id')
+    setHasActiveGame(!!(sessionId && roomId))
+  }, [])
 
   return (
     <div className="main-screen">
@@ -26,6 +34,11 @@ export default function MainScreen() {
         <p className="subtitle">Daily Battle Arena</p>
         
         <div className="menu-buttons">
+          {hasActiveGame && (
+            <button className="menu-btn back-to-game" onClick={() => navigate('/game')}>
+              BACK TO MY CHARACTER
+            </button>
+          )}
           <button className="menu-btn primary" onClick={() => navigate('/create')}>
             START GAME
           </button>
