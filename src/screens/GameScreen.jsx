@@ -603,66 +603,78 @@ export default function GameScreen() {
           Next round: {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
         </div>
         <div className="header-actions">
-          <div className="scavenge-wrap">
-            <button
-              type="button"
-              className={`scavenge-btn ${scavengeUsedThisRound ? 'used' : ''}`}
-              onClick={() => {
-                if (scavengeUsedThisRound && lastScavengeResultThisRound) {
-                  setScavengeResult(lastScavengeResultThisRound)
-                } else {
-                  handleScavenge()
-                }
-              }}
-              disabled={me?.is_eliminated}
-              title={scavengeUsedThisRound && lastScavengeResultThisRound
-                ? `Already scavenged this round: ${lastScavengeResultThisRound.msg}`
-                : 'Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP'}
-            >
-              🔍 Scavenge
-            </button>
-          </div>
-          <div className="stance-section">
-            <span className="stance-title" title="Your combat stance for this round">Stance</span>
-            <div className="stance-wrap">
+          <div className="actions-card">
+            <h3 className="actions-card-title">Actions</h3>
+            <div className="scavenge-block">
+              <div className="action-row">
+                <button
+                  type="button"
+                  className={`scavenge-btn ${scavengeUsedThisRound ? 'used' : ''}`}
+                  onClick={() => {
+                    if (scavengeUsedThisRound && lastScavengeResultThisRound) {
+                      setScavengeResult(lastScavengeResultThisRound)
+                    } else {
+                      handleScavenge()
+                    }
+                  }}
+                  disabled={me?.is_eliminated}
+                  title={scavengeUsedThisRound && lastScavengeResultThisRound
+                    ? `Already scavenged this round: ${lastScavengeResultThisRound.msg}`
+                    : 'Once per round: 40% +1 pt, 5% +3 pts, 40% nothing, 15% -1 HP'}
+                >
+                  🔍 Scavenge
+                </button>
+                <span className="action-hint">Once per round. Chance for +pts or -HP</span>
+              </div>
+            </div>
+            <div className="stance-section">
+              <span className="stance-title" title="Your combat stance for this round">Stance</span>
+              <div className="stance-wrap">
+                <button
+                  type="button"
+                  className={`stance-btn ${currentStance === 'aggressive' ? 'selected' : ''}`}
+                  onClick={() => setStance('aggressive')}
+                  disabled={me?.is_eliminated}
+                  title="Aggressive: +1 Attack this round. Deal more damage when you attack."
+                >
+                  <span className="stance-label">⚔ Aggressive</span>
+                  <span className="stance-effect">+1 ATK</span>
+                </button>
+                <button
+                  type="button"
+                  className={`stance-btn ${currentStance === 'defensive' ? 'selected' : ''}`}
+                  onClick={() => setStance('defensive')}
+                  disabled={me?.is_eliminated}
+                  title="Defensive: +1 Defense this round. Block more incoming damage."
+                >
+                  <span className="stance-label">🛡 Defensive</span>
+                  <span className="stance-effect">+1 DEF</span>
+                </button>
+                <button
+                  type="button"
+                  className={`stance-btn ${currentStance === 'greedy' ? 'selected' : ''}`}
+                  onClick={() => setStance('greedy')}
+                  disabled={me?.is_eliminated}
+                  title="Greedy: +1 extra point if you survive the round. No attack/defense bonus."
+                >
+                  <span className="stance-label">💰 Greedy</span>
+                  <span className="stance-effect">+1 pt</span>
+                </button>
+              </div>
+            </div>
+            <div className="recap-block">
               <button
-                type="button"
-                className={`stance-btn ${currentStance === 'aggressive' ? 'selected' : ''}`}
-                onClick={() => setStance('aggressive')}
-                disabled={me?.is_eliminated}
-                title="Aggressive: +1 Attack this round. Deal more damage when you attack."
+                className="recap-btn"
+                onClick={showFullGameRecap}
+                disabled={me.is_eliminated}
+                title="View round recap"
               >
-                ⚔ Aggressive
+                📜 ROUND RECAP
               </button>
-              <button
-                type="button"
-                className={`stance-btn ${currentStance === 'defensive' ? 'selected' : ''}`}
-                onClick={() => setStance('defensive')}
-                disabled={me?.is_eliminated}
-                title="Defensive: +1 Defense this round. Block more incoming damage."
-              >
-                🛡 Defensive
-              </button>
-              <button
-                type="button"
-                className={`stance-btn ${currentStance === 'greedy' ? 'selected' : ''}`}
-                onClick={() => setStance('greedy')}
-                disabled={me?.is_eliminated}
-                title="Greedy: +1 extra point if you survive the round. No attack/defense bonus."
-              >
-                💰 Greedy
-              </button>
+              <span className="action-hint">View past round results</span>
             </div>
           </div>
         </div>
-        <button
-          className="recap-btn"
-          onClick={showFullGameRecap}
-          disabled={me.is_eliminated}
-          title="View round recap"
-        >
-          📜 ROUND RECAP
-        </button>
         <div className="my-stats">
           <span className="my-rank">#{myRank}</span>
           <PixelKnight color={me.color} size="small" />

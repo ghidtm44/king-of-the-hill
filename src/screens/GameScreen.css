@@ -33,6 +33,62 @@
   border-right: 2px solid var(--border-pixel);
 }
 
+/* Actions card - container, card styling only on mobile */
+.actions-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.actions-card-title {
+  display: none;
+  width: 100%;
+  margin: 0 0 0.25rem 0;
+  font-size: 0.4rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.recap-block {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border-pixel);
+}
+
+.scavenge-block {
+  display: flex;
+  align-items: center;
+  margin-right: 1rem;
+  padding-right: 1rem;
+  border-right: 2px solid var(--border-pixel);
+}
+
+.scavenge-block .action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.action-hint {
+  display: none;
+  font-size: 0.32rem;
+  color: var(--text-muted);
+  max-width: 140px;
+  line-height: 1.2;
+}
+
+.stance-btn .stance-effect {
+  display: none;
+  font-size: 0.28rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
 .scavenge-btn {
   padding: 0.35rem 0.6rem;
   font-size: 0.38rem;
@@ -1190,15 +1246,90 @@
     justify-content: flex-start;
   }
 
-  .game-header .scavenge-btn,
+  .game-header .actions-card {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-light);
+    border: 2px solid var(--border-pixel);
+    border-radius: 2px;
+  }
+
+  .game-header .actions-card-title {
+    display: block;
+  }
+
+  .game-header .scavenge-block {
+    margin-right: 0;
+    padding-right: 0;
+    border-right: none;
+    width: 100%;
+  }
+
+  .game-header .scavenge-block .action-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .game-header .action-hint {
+    display: block;
+    max-width: none;
+    font-size: 0.35rem;
+  }
+
+  .game-header .stance-section {
+    width: 100%;
+  }
+
+  .game-header .stance-wrap {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
   .game-header .stance-btn {
-    min-height: 44px;
+    min-height: 48px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.5rem 0.35rem;
+    font-size: 0.35rem;
+  }
+
+  .game-header .stance-btn .stance-effect {
+    display: block;
+    font-size: 0.3rem;
+    color: var(--text-muted);
+  }
+
+  .game-header .stance-btn.selected .stance-effect {
+    color: var(--accent-gold);
+  }
+
+  .game-header .recap-block {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
   }
 
   .game-header .recap-btn {
-    order: 4;
-    font-size: 0.35rem;
-    padding: 0.35rem 0.5rem;
+    order: 0;
+    font-size: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+  }
+
+  .game-header .scavenge-btn {
+    min-height: 44px;
+    font-size: 0.4rem;
+    padding: 0.5rem 0.75rem;
   }
 
   .game-header .my-stats {
