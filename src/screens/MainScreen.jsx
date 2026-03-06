@@ -90,7 +90,24 @@ export default function MainScreen() {
         <h1 className="title">WOLFPACK WARRIORS</h1>
         <p className="footer-credit footer-credit-mobile">A game created by Todd G</p>
         <p className="subtitle">Battle Arena</p>
-        
+
+        <div className="menu-buttons">
+          {hasActiveGame && (
+            <button className="menu-btn back-to-game" onClick={() => navigate('/game')}>
+              BACK TO MY CHARACTER
+            </button>
+          )}
+          <button className="menu-btn primary" onClick={() => navigate('/create')}>
+            START GAME
+          </button>
+          <button className="menu-btn" onClick={() => navigate('/rules')}>
+            RULES
+          </button>
+          <button className="menu-btn" onClick={() => navigate('/hall-of-fame')}>
+            HALL OF FAME
+          </button>
+        </div>
+
         <div className="load-code-section">
           <p className="load-code-label">Load character on this device</p>
           <form onSubmit={handleLoadByCode} className="load-code-form">
@@ -114,23 +131,6 @@ export default function MainScreen() {
               <button type="button" className="load-code-dismiss" onClick={() => setLoadError(null)} aria-label="Dismiss">×</button>
             </div>
           )}
-        </div>
-
-        <div className="menu-buttons">
-          {hasActiveGame && (
-            <button className="menu-btn back-to-game" onClick={() => navigate('/game')}>
-              BACK TO MY CHARACTER
-            </button>
-          )}
-          <button className="menu-btn primary" onClick={() => navigate('/create')}>
-            START GAME
-          </button>
-          <button className="menu-btn" onClick={() => navigate('/rules')}>
-            RULES
-          </button>
-          <button className="menu-btn" onClick={() => navigate('/hall-of-fame')}>
-            HALL OF FAME
-          </button>
         </div>
       </div>
     </div>

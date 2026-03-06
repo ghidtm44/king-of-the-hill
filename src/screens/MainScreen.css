@@ -126,19 +126,21 @@
 .subtitle {
   font-size: 0.6rem;
   color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .load-code-section {
-  margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--border-pixel);
   width: 100%;
   max-width: 280px;
 }
 
 .load-code-label {
-  font-size: 0.4rem;
+  font-size: 0.35rem;
   color: var(--text-muted);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.5rem;
 }
 
 .load-code-form {
@@ -150,7 +152,7 @@
 
 .load-code-input {
   font-family: 'Press Start 2P', cursive;
-  font-size: 0.5rem;
+  font-size: 0.45rem;
   padding: 0.5rem 0.75rem;
   background: var(--bg-light);
   border: 2px solid var(--border-pixel);
@@ -162,13 +164,13 @@
 
 .load-code-input::placeholder {
   color: var(--text-muted);
-  font-size: 0.35rem;
+  font-size: 0.32rem;
 }
 
 .load-code-btn {
   min-width: auto;
   padding: 0.5rem 1rem;
-  font-size: 0.5rem;
+  font-size: 0.45rem;
 }
 
 .load-code-error {
