@@ -882,7 +882,7 @@ export default function GameScreen() {
             aria-label={roundLogExpanded ? 'Collapse recap' : 'Expand recap'}
           >
             <h3>ROUND RECAP — Attack flow</h3>
-            <span className="round-log-arrow">{roundLogExpanded ? '▲' : '▼'}</span>
+            <span className="round-log-arrow">{roundLogExpanded ? '▼' : '▲'}</span>
           </button>
           <div className="log-content">
             {roundResults.length === 0 ? (
