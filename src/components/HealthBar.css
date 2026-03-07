@@ -26,7 +26,7 @@
 }
 
 .health-bar-label {
-  font-size: 0.35rem;
+  font-size: 0.5rem;
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -38,4 +38,26 @@
 .health-bar-wrap.compact .health-bar {
   min-width: 30px;
   height: 8px;
+}
+
+/* Mobile: ensure HP bar is visible and readable */
+@media (max-width: 768px) {
+  .health-bar-wrap {
+    flex-shrink: 0;
+    min-width: 70px;
+  }
+
+  .health-bar-wrap.compact {
+    max-width: 90px;
+    min-width: 70px;
+  }
+
+  .health-bar-wrap.compact .health-bar {
+    min-width: 40px;
+    height: 10px;
+  }
+
+  .health-bar-label {
+    font-size: 0.5rem;
+  }
 }
